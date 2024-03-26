@@ -1,0 +1,6 @@
+CREATE TABLE entries (
+  id SERIAL PRIMARY KEY,
+  address VARCHAR NOT NULL,
+  revenue BIGINT NOT NULL DEFAULT 0,
+  date DATE NOT NULL
+)
