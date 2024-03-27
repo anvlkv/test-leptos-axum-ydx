@@ -3,6 +3,7 @@ mod handlers;
 mod models;
 mod routes;
 mod schema;
+mod user;
 
 pub mod fileserv;
 
@@ -13,10 +14,8 @@ use axum::http::{HeaderMap, Request};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
-use axum_session::{
-    DatabasePool, Session, SessionConfig, SessionLayer, SessionPgPool, SessionStore,
-};
-use axum_session_auth::{AuthConfig, AuthSession, AuthSessionLayer, Authentication, HasPermission};
+use axum_session::{SessionConfig, SessionLayer, SessionPgPool, SessionStore};
+use axum_session_auth::{AuthConfig, AuthSessionLayer};
 use deadpool_diesel::postgres::{Manager, Pool};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use fileserv::file_and_error_handler;
@@ -80,12 +79,14 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api", api_routes)
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
-        .with_state(state)
-        .layer(SessionLayer::new(session_store))
         .layer(
-            AuthSessionLayer::<models::User, i64, SessionPgPool, PgPool>::new(Some(s_pool))
-                .with_config(auth_config),
-        );
+            AuthSessionLayer::<user::User, i64, SessionPgPool, PgPool>::new(Some(
+                state.s_pool.clone(),
+            ))
+            .with_config(auth_config),
+        )
+        .layer(SessionLayer::new(session_store))
+        .with_state(state);
 
     log::info!("listening on http://{}", &addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
