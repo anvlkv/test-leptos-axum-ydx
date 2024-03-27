@@ -11,8 +11,10 @@ use axum::routing::get;
 use axum::Router;
 use axum_session::{SessionConfig, SessionLayer, SessionPgPool, SessionStore};
 use axum_session_auth::{AuthConfig, AuthSessionLayer};
-use common::{ctx::AppAuthSession, migrations::run_migrations, user, IdType};
+use common::{ctx::AppAuthSession, migrations::run_migrations, models, schema, user, IdType};
+use config::Config;
 use deadpool_diesel::postgres::{Manager, Pool};
+use diesel::{insert_into, prelude::*};
 use fileserv::file_and_error_handler;
 use leptos::*;
 use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
@@ -36,9 +38,7 @@ async fn main() -> anyhow::Result<()> {
     let manager = Manager::new(config.db.url.clone(), deadpool_diesel::Runtime::Tokio1);
     let d_pool = Pool::builder(manager).build().unwrap();
 
-    {
-        run_migrations(&d_pool).await;
-    }
+    initial_setup(&d_pool, &config).await;
 
     let s_pool = PgPoolOptions::new()
         .max_connections(5)
@@ -87,6 +87,56 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
+}
+
+async fn initial_setup(pool: &Pool, config: &Config) {
+    run_migrations(pool).await;
+
+    use schema::{permissions::dsl::*, users::dsl::*};
+
+    // add admin user from env
+    let conn = pool.get().await.unwrap();
+    let admin_username = config.default_admin_user.clone();
+    let admin: Vec<models::User> = conn
+        .interact(move |conn| {
+            let query = users
+                .filter(username.eq(admin_username.as_str()))
+                .limit(1)
+                .select(models::User::as_select());
+
+            query.load::<models::User>(conn).unwrap()
+        })
+        .await
+        .unwrap();
+
+    if admin.first().is_none() {
+        let admin_username = config.default_admin_user.clone();
+        let pwd =
+            bcrypt::hash(config.default_admin_password.as_str(), bcrypt::DEFAULT_COST).unwrap();
+
+        conn.interact(move |conn| {
+            let admin = insert_into(users)
+                .values((
+                    username.eq(admin_username),
+                    password.eq(pwd),
+                    name.eq("Администратор"),
+                    family_name.eq("По умолчанию"),
+                ))
+                .get_result::<models::User>(conn)
+                .unwrap();
+            _ = insert_into(permissions)
+                .values(vec![
+                    (user_id.eq(admin.id), token.eq("ManageUsers")),
+                    (user_id.eq(admin.id), token.eq("EditAll")),
+                ])
+                .execute(conn)
+                .unwrap();
+        })
+        .await
+        .unwrap();
+
+        log::info!("Added admin user");
+    }
 }
 
 async fn leptos_routes_handler(

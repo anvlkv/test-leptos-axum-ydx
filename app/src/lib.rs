@@ -24,6 +24,8 @@ pub fn App() -> impl IntoView {
     );
 
     view! {
+        <Html lang="ru"/>
+
         <Stylesheet id="leptos" href="/pkg/start-axum-workspace.css"/>
 
         <Title text="Тестовое задание"/>
@@ -35,7 +37,12 @@ pub fn App() -> impl IntoView {
         }>
             <main>
                 <Routes>
-                    <Route path="" view=HomePage/>
+                    <Route path="/login" view=move || view!{ <Login action=login/> }/>
+                    <ProtectedRoute
+                        path="/"
+                        condition={move || user().is_some()}
+                        redirect_path="/login"
+                        view=HomePage/>
                 </Routes>
             </main>
         </Router>

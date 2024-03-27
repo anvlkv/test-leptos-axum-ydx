@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{models, IdType};
+use crate::IdType;
 use leptos::*;
 use serde::{Deserialize, Serialize};
 
@@ -31,18 +31,20 @@ pub async fn get_user() -> Result<Option<User>, ServerFnError> {
 pub mod ssr {
     use super::*;
 
+    use crate::models;
+
     use axum::async_trait;
     use axum_session_auth::{Authentication, HasPermission};
     use sqlx::PgPool;
 
-    #[derive(sqlx::FromRow, Clone)]
+    #[derive(sqlx::FromRow, Clone, Debug)]
     pub struct SqlPermissionTokens {
         pub token: String,
     }
 
     impl User {
         pub async fn get_with_passhash(id: IdType, pool: &PgPool) -> Option<(Self, UserPasshash)> {
-            let sqluser = sqlx::query_as::<_, models::User>("SELECT * FROM users WHERE id = ?")
+            let sqluser = sqlx::query_as::<_, models::User>("SELECT * FROM users WHERE id = $1")
                 .bind(id)
                 .fetch_one(pool)
                 .await
@@ -50,7 +52,7 @@ pub mod ssr {
 
             //lets just get all the tokens the user can use, we will only use the full permissions if modifying them.
             let sql_user_perms = sqlx::query_as::<_, SqlPermissionTokens>(
-                "SELECT token FROM user_permissions WHERE user_id = ?;",
+                "SELECT token FROM user_permissions WHERE user_id = $1;",
             )
             .bind(id)
             .fetch_all(pool)
@@ -70,21 +72,27 @@ pub mod ssr {
             name: String,
             pool: &PgPool,
         ) -> Option<(Self, UserPasshash)> {
+            log::debug!("getting user: {name}");
+
             let sqluser =
-                sqlx::query_as::<_, models::User>("SELECT * FROM users WHERE username = ?")
+                sqlx::query_as::<_, models::User>("SELECT * FROM users WHERE username = $1")
                     .bind(name)
                     .fetch_one(pool)
                     .await
                     .ok()?;
 
+            log::info!("got user: {sqluser:?}");
+
             //lets just get all the tokens the user can use, we will only use the full permissions if modifying them.
             let sql_user_perms = sqlx::query_as::<_, SqlPermissionTokens>(
-                "SELECT token FROM user_permissions WHERE user_id = ?;",
+                "SELECT token FROM permissions WHERE user_id = $1;",
             )
             .bind(sqluser.id)
             .fetch_all(pool)
             .await
             .ok()?;
+
+            log::info!("got user perms: {sql_user_perms:?}");
 
             Some(sqluser.into_user(Some(sql_user_perms)))
         }

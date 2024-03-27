@@ -14,6 +14,8 @@ pub struct DatabaseConfig {
 pub struct Config {
     pub leptos: ConfFile,
     pub db: DatabaseConfig,
+    pub(crate) default_admin_user: String,
+    pub(crate) default_admin_password: String,
 }
 
 pub static CONFIG: OnceCell<Config> = OnceCell::const_new();
@@ -36,6 +38,8 @@ async fn init_config() -> Config {
     Config {
         leptos: conf,
         db: database_config,
+        default_admin_user: env::var("ADMIN_USERNAME").expect("ADMIN_USERNAME must be set"),
+        default_admin_password: env::var("ADMIN_PWD").expect("ADMIN_PWD must be set"),
     }
 }
 

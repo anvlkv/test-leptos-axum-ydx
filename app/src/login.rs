@@ -14,13 +14,18 @@ pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView 
                     placeholder="Введите ваш логин"
                     maxlength="32"
                     name="username"
+                    autocomplete="username"
                     class="auth-input"
                 />
             </label>
             <br/>
             <label>
                 "Пароль:"
-                <input type="password" placeholder="Введите ваш пароль" name="password" class="auth-input"/>
+                <input type="password"
+                    autocomplete="current-password"
+                    placeholder="Введите ваш пароль"
+                    name="password"
+                    class="auth-input"/>
             </label>
             <br/>
             <label>

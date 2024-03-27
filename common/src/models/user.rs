@@ -1,10 +1,10 @@
-use std::collections::HashSet;
-
+#[cfg(feature = "ssr")]
 use diesel::prelude::*;
 
 use crate::IdType;
 
-#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Clone, sqlx::FromRow))]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, sqlx::FromRow))]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::users))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct User {
@@ -18,6 +18,8 @@ pub struct User {
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
+    use std::collections::HashSet;
+
     use super::*;
 
     use crate::user::{ssr::SqlPermissionTokens, UserPasshash};

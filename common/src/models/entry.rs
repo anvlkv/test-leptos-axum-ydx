@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use diesel::data_types::Cents;
+#[cfg(feature="ssr")]
 use diesel::prelude::*;
 
 use crate::IdType;

@@ -14,7 +14,7 @@ diesel::table! {
     permissions (id) {
         id -> Int4,
         token -> Text,
-        user_id -> Nullable<Int4>,
+        user_id -> Int4,
     }
 }
 

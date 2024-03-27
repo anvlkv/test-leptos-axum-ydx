@@ -5,14 +5,23 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.81"
-axum = { workspace = true, features = ["macros"] }
-axum_session = { version = "0.13.0", features = ["postgres-rustls"] }
-axum_session_auth = { version = "0.13.0", features = ["postgres-rustls"] }
+axum = { workspace = true, features = ["macros"], optional = true }
+axum_session = { version = "0.13.0", features = [
+    "postgres-rustls",
+], optional = true }
+axum_session_auth = { version = "0.13.0", features = [
+    "postgres-rustls",
+], optional = true }
 bcrypt = { version = "0.15.1", optional = true }
 chrono = { vesrion = "0.4.35", features = ["serde"] }
-deadpool-diesel = { version = "0.5.0", features = ["serde", "postgres"] }
+deadpool-diesel = { version = "0.5.0", features = [
+    "serde",
+    "postgres",
+], optional = true }
 diesel = { version = "2.1.0", features = ["postgres", "chrono"] }
-diesel_migrations = { version = "2.1.0", features = ["postgres"] }
+diesel_migrations = { version = "2.1.0", features = [
+    "postgres",
+], optional = true }
 leptos = { workspace = true }
 leptos_axum = { workspace = true, optional = true }
 log.workspace = true
@@ -21,8 +30,18 @@ sqlx = { version = "0.7.4", features = [
     "runtime-tokio",
     "postgres",
     "tls-rustls",
-] }
+], optional = true }
 
 
 [features]
-ssr = ["leptos/ssr", "dep:leptos_axum", "dep:bcrypt"]
+ssr = [
+    "leptos/ssr",
+    "dep:leptos_axum",
+    "dep:bcrypt",
+    "dep:diesel_migrations",
+    "dep:sqlx",
+    "dep:deadpool-diesel",
+    "dep:axum",
+    "dep:axum_session",
+    "dep:axum_session_auth",
+]

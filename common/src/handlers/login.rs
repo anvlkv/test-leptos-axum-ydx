@@ -13,10 +13,12 @@ pub async fn login(
     let pool = pool()?;
     let auth = auth()?;
 
+    log::debug!("getting user");
+
     let (user, UserPasshash(expected_passhash)) =
         User::get_from_username_with_passhash(username, &pool)
             .await
-            .ok_or_else(|| ServerFnError::new("Проверьте введенные логин и пароль."))?;
+            .ok_or_else(|| ServerFnError::new("Пользователь не найден."))?;
 
     match verify(password, &expected_passhash)? {
         true => {
