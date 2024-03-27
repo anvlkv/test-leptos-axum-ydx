@@ -1,35 +1,24 @@
 mod config;
-mod handlers;
-mod models;
-mod routes;
-mod schema;
-mod user;
 
 pub mod fileserv;
 
 use app::*;
 use axum::body::Body as AxumBody;
-use axum::extract::{FromRef, RawQuery, State};
-use axum::http::{HeaderMap, Request};
+use axum::extract::{FromRef, Path, State};
+use axum::http::Request;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
 use axum_session::{SessionConfig, SessionLayer, SessionPgPool, SessionStore};
 use axum_session_auth::{AuthConfig, AuthSessionLayer};
+use common::{ctx::AppAuthSession, migrations::run_migrations, user, IdType};
 use deadpool_diesel::postgres::{Manager, Pool};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use fileserv::file_and_error_handler;
 use leptos::*;
-use leptos_axum::{generate_route_list, LeptosRoutes};
-use sqlx::{
-    postgres::{PgConnectOptions, PgPoolOptions},
-    ConnectOptions, PgPool,
-};
+use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
+use sqlx::{postgres::PgPoolOptions, PgPool};
 
 use crate::config::config;
-use crate::routes::api_router;
-
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
 #[derive(Clone, FromRef)]
 pub struct AppState {
@@ -66,21 +55,26 @@ async fn main() -> anyhow::Result<()> {
 
     let addr = state.leptos_options.site_addr;
     let routes = generate_route_list(App);
-    let api_routes = api_router();
 
     let session_config = SessionConfig::default().with_table_name("sessioons");
 
-    let auth_config = AuthConfig::<i64>::default().with_anonymous_user_id(Some(1));
+    let auth_config = AuthConfig::<IdType>::default().with_anonymous_user_id(Some(1));
     let session_store =
         SessionStore::<SessionPgPool>::new(Some(state.s_pool.clone().into()), session_config)
             .await?;
 
     let app = Router::new()
-        .nest("/api", api_routes)
+        .route(
+            "/api/*fn_name",
+            get(server_fn_handler)
+                .post(server_fn_handler)
+                .patch(server_fn_handler)
+                .delete(server_fn_handler),
+        )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
         .layer(
-            AuthSessionLayer::<user::User, i64, SessionPgPool, PgPool>::new(Some(
+            AuthSessionLayer::<user::User, IdType, SessionPgPool, PgPool>::new(Some(
                 state.s_pool.clone(),
             ))
             .with_config(auth_config),
@@ -95,27 +89,38 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_migrations(pool: &Pool) {
-    let conn = pool.get().await.unwrap();
-    conn.interact(|conn| conn.run_pending_migrations(MIGRATIONS).map(|_| ()))
-        .await
-        .unwrap()
-        .unwrap();
-}
-
 async fn leptos_routes_handler(
     State(app_state): State<AppState>,
-    headers: HeaderMap,
-    raw_query: RawQuery,
+    auth_session: AppAuthSession,
     req: Request<AxumBody>,
 ) -> Response {
     let handler = leptos_axum::render_app_to_stream_with_context(
         app_state.leptos_options.clone(),
         move || {
             provide_context(app_state.d_pool.clone());
+            provide_context(auth_session.clone());
         },
         App,
     );
 
     handler(req).await.into_response()
+}
+
+async fn server_fn_handler(
+    State(app_state): State<AppState>,
+    auth_session: AppAuthSession,
+    path: Path<String>,
+    request: Request<AxumBody>,
+) -> impl IntoResponse {
+    log::debug!("{:?}", path);
+
+    handle_server_fns_with_context(
+        move || {
+            provide_context(auth_session.clone());
+            provide_context(app_state.d_pool.clone());
+            provide_context(app_state.s_pool.clone());
+        },
+        request,
+    )
+    .await
 }

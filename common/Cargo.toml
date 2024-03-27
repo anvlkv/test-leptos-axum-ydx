@@ -1,0 +1,28 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.81"
+axum = { workspace = true, features = ["macros"] }
+axum_session = { version = "0.13.0", features = ["postgres-rustls"] }
+axum_session_auth = { version = "0.13.0", features = ["postgres-rustls"] }
+bcrypt = { version = "0.15.1", optional = true }
+chrono = { vesrion = "0.4.35", features = ["serde"] }
+deadpool-diesel = { version = "0.5.0", features = ["serde", "postgres"] }
+diesel = { version = "2.1.0", features = ["postgres", "chrono"] }
+diesel_migrations = { version = "2.1.0", features = ["postgres"] }
+leptos = { workspace = true }
+leptos_axum = { workspace = true, optional = true }
+log.workspace = true
+serde = { version = "1.0.197", features = ["derive"] }
+sqlx = { version = "0.7.4", features = [
+    "runtime-tokio",
+    "postgres",
+    "tls-rustls",
+] }
+
+
+[features]
+ssr = ["leptos/ssr", "dep:leptos_axum", "dep:bcrypt"]

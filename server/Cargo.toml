@@ -9,9 +9,7 @@ edition = "2021"
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = ["ssr"] }
 leptos_axum.workspace = true
-diesel = { version = "2.1.0", features = ["postgres", "chrono"] }
 dotenvy = "0.15"
-chrono = { vesrion = "0.4.35", features = ["serde"] }
 deadpool-diesel = { version = "0.5.0", features = ["serde", "postgres"] }
 axum = { workspace = true, features = ["macros"] }
 simple_logger.workspace = true
@@ -20,7 +18,6 @@ tower.workspace = true
 tower-http.workspace = true
 log.workspace = true
 serde = { version = "1.0.197", features = ["derive"] }
-diesel_migrations = { version = "2.1.0", features = ["postgres"] }
 axum_session = { version = "0.13.0", features = ["postgres-rustls"] }
 axum_session_auth = { version = "0.13.0", features = ["postgres-rustls"] }
 sqlx = { version = "0.7.4", features = [
@@ -29,3 +26,4 @@ sqlx = { version = "0.7.4", features = [
     "tls-rustls",
 ] }
 anyhow = "1.0.81"
+common = { path = "../common", features = ["ssr"] }
