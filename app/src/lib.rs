@@ -26,6 +26,7 @@ pub fn App() -> impl IntoView {
     view! {
         <Html lang="ru"/>
 
+        <Stylesheet id="reset" href="https://unpkg.com/scss-reset/reset.css"/>
         <Stylesheet id="leptos" href="/pkg/start-axum-workspace.css"/>
 
         <Title text="Тестовое задание"/>
@@ -35,7 +36,7 @@ pub fn App() -> impl IntoView {
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <main>
+            <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen flex">
                 <Routes>
                     <Route path="/login" view=move || view!{ <Login action=login/> }/>
                     <ProtectedRoute
