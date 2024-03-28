@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UserPasshash(pub String);
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct User {
     pub id: IdType,
     pub name: String,
@@ -52,7 +52,7 @@ pub mod ssr {
 
             //lets just get all the tokens the user can use, we will only use the full permissions if modifying them.
             let sql_user_perms = sqlx::query_as::<_, SqlPermissionTokens>(
-                "SELECT token FROM user_permissions WHERE user_id = $1;",
+                "SELECT token FROM permissions WHERE user_id = $1;",
             )
             .bind(id)
             .fetch_all(pool)
@@ -72,16 +72,12 @@ pub mod ssr {
             name: String,
             pool: &PgPool,
         ) -> Option<(Self, UserPasshash)> {
-            log::debug!("getting user: {name}");
-
             let sqluser =
                 sqlx::query_as::<_, models::User>("SELECT * FROM users WHERE username = $1")
                     .bind(name)
                     .fetch_one(pool)
                     .await
                     .ok()?;
-
-            log::info!("got user: {sqluser:?}");
 
             //lets just get all the tokens the user can use, we will only use the full permissions if modifying them.
             let sql_user_perms = sqlx::query_as::<_, SqlPermissionTokens>(
@@ -91,8 +87,6 @@ pub mod ssr {
             .fetch_all(pool)
             .await
             .ok()?;
-
-            log::info!("got user perms: {sql_user_perms:?}");
 
             Some(sqluser.into_user(Some(sql_user_perms)))
         }

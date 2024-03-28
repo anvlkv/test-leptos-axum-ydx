@@ -138,6 +138,7 @@ dependencies = [
  "leptos_axum",
  "leptos_meta",
  "leptos_router",
+ "log",
  "thiserror",
 ]
 
@@ -2854,6 +2855,7 @@ dependencies = [
  "axum_session",
  "axum_session_auth",
  "bcrypt",
+ "chrono",
  "common",
  "deadpool-diesel",
  "diesel",

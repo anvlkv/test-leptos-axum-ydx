@@ -5,8 +5,8 @@ use leptos_router::ActionForm;
 #[component]
 pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
-        <ActionForm action=action class="bg-slate-200 dark:bg-slate-800 border-r-2 border-slate-500 p-8 flex flex-col">
-            <h1 class="text-2xl mb-12">"Чтобы начать пользоваться приложением необходимо войти"</h1>
+        <ActionForm action=action class="bg-slate-200 dark:bg-slate-800 border-solid border-r-2 border-slate-500 p-8 h-full max-w-full md:max-w-1/2 flex flex-col">
+            <h1 class="text-2xl mb-12">"Войдите, чтобы начать пользоваться приложением"</h1>
             <label class="w-full pb-8 flex flex-col-reverse">
                 <input
                     type="text"

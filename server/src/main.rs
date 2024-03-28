@@ -58,7 +58,10 @@ async fn main() -> anyhow::Result<()> {
 
     let session_config = SessionConfig::default().with_table_name("sessioons");
 
-    let auth_config = AuthConfig::<IdType>::default().with_anonymous_user_id(Some(1));
+    let auth_config = AuthConfig::<IdType>::default()
+        .with_anonymous_user_id(Some(1))
+        .with_max_age(chrono::Duration::try_days(2).unwrap())
+        .with_session_id("localhost:3000");
     let session_store =
         SessionStore::<SessionPgPool>::new(Some(state.s_pool.clone().into()), session_config)
             .await?;

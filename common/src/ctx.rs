@@ -3,7 +3,9 @@ use axum_session_auth::AuthSession;
 use leptos::*;
 use sqlx::PgPool;
 
-pub type AppAuthSession = AuthSession<crate::user::User, i32, SessionPgPool, PgPool>;
+use crate::IdType;
+
+pub type AppAuthSession = AuthSession<crate::user::User, IdType, SessionPgPool, PgPool>;
 
 pub fn pool() -> Result<PgPool, ServerFnError> {
     use_context::<PgPool>().ok_or_else(|| ServerFnError::ServerError("Pool missing.".into()))

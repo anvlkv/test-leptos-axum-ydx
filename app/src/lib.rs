@@ -1,5 +1,9 @@
+mod dashboard;
+mod home;
 mod login;
 mod logout;
+mod reports;
+mod users;
 
 pub mod error_template;
 
@@ -7,9 +11,12 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
-use crate::error_template::{AppError, ErrorTemplate};
+use dashboard::Dashboard;
+use error_template::{AppError, ErrorTemplate};
+use home::HomePage;
 use login::Login;
-use logout::Logout;
+use reports::Reports;
+use users::Users;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -22,6 +29,13 @@ pub fn App() -> impl IntoView {
         move || (login.version().get(), logout.version().get()),
         move |_| common::user::get_user(),
     );
+
+    let u_signal = Signal::derive(move || {
+        user()
+            .map(|s| s.ok().flatten())
+            .flatten()
+            .unwrap_or_default()
+    });
 
     view! {
         <Html lang="ru"/>
@@ -36,29 +50,24 @@ pub fn App() -> impl IntoView {
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen flex">
-                <Routes>
-                    <Route path="/login" view=move || view!{ <Login action=login/> }/>
-                    <ProtectedRoute
-                        path="/"
-                        condition={move || user().is_some()}
-                        redirect_path="/login"
-                        view=HomePage/>
-                </Routes>
+            <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen flex flex-wrap">
+                <Suspense
+                        fallback=move || view! { <p>"Loading..."</p> }
+                    >
+                    <Routes>
+                        <Route path="/login" view=move || view!{ <Login action=login/> }/>
+                        <ProtectedRoute
+                            path="/"
+                            condition={move || user().map(|s| s.map(|u| u.is_some()).unwrap_or_default()).unwrap_or_default()}
+                            redirect_path="/login"
+                            view=move || view!{ <HomePage user=u_signal /> }>
+                                <Route path="" view=Dashboard/>
+                                <Route path="reports" view=Reports/>
+                                <Route path="users" view=Users/>
+                        </ProtectedRoute>
+                    </Routes>
+                </Suspense>
             </main>
         </Router>
-    }
-}
-
-/// Renders the home page of your application.
-#[component]
-fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
-
-    view! {
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
     }
 }
