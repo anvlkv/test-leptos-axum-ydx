@@ -37,11 +37,6 @@ pub mod ssr {
     use axum_session_auth::{Authentication, HasPermission};
     use sqlx::PgPool;
 
-    #[derive(sqlx::FromRow, Clone, Debug)]
-    pub struct SqlPermissionTokens {
-        pub token: String,
-    }
-
     impl User {
         pub async fn get_with_passhash(id: IdType, pool: &PgPool) -> Option<(Self, UserPasshash)> {
             let sqluser = sqlx::query_as::<_, models::User>("SELECT * FROM users WHERE id = $1")
@@ -50,9 +45,8 @@ pub mod ssr {
                 .await
                 .ok()?;
 
-            //lets just get all the tokens the user can use, we will only use the full permissions if modifying them.
-            let sql_user_perms = sqlx::query_as::<_, SqlPermissionTokens>(
-                "SELECT token FROM permissions WHERE user_id = $1;",
+            let sql_user_perms = sqlx::query_as::<_, models::PermissionTokens>(
+                "SELECT * FROM permissions WHERE user_id = $1;",
             )
             .bind(id)
             .fetch_all(pool)
@@ -79,9 +73,8 @@ pub mod ssr {
                     .await
                     .ok()?;
 
-            //lets just get all the tokens the user can use, we will only use the full permissions if modifying them.
-            let sql_user_perms = sqlx::query_as::<_, SqlPermissionTokens>(
-                "SELECT token FROM permissions WHERE user_id = $1;",
+            let sql_user_perms = sqlx::query_as::<_, models::PermissionTokens>(
+                "SELECT * FROM permissions WHERE user_id = $1;",
             )
             .bind(sqluser.id)
             .fetch_all(pool)

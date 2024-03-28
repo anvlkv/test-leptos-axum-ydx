@@ -56,12 +56,13 @@ async fn main() -> anyhow::Result<()> {
     let addr = state.leptos_options.site_addr;
     let routes = generate_route_list(App);
 
-    let session_config = SessionConfig::default().with_table_name("sessioons");
+    let session_config = SessionConfig::default().with_table_name("sessions");
 
     let auth_config = AuthConfig::<IdType>::default()
         .with_anonymous_user_id(Some(1))
         .with_max_age(chrono::Duration::try_days(2).unwrap())
-        .with_session_id("localhost:3000");
+        .with_session_id("localhost");
+
     let session_store =
         SessionStore::<SessionPgPool>::new(Some(state.s_pool.clone().into()), session_config)
             .await?;
@@ -93,6 +94,8 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn initial_setup(pool: &Pool, config: &Config) {
+    use common::perms::*;
+
     run_migrations(pool).await;
 
     use schema::{permissions::dsl::*, users::dsl::*};
@@ -129,8 +132,8 @@ async fn initial_setup(pool: &Pool, config: &Config) {
                 .unwrap();
             _ = insert_into(permissions)
                 .values(vec![
-                    (user_id.eq(admin.id), token.eq("ManageUsers")),
-                    (user_id.eq(admin.id), token.eq("EditAll")),
+                    (user_id.eq(admin.id), token.eq(MANAGE_USERS)),
+                    (user_id.eq(admin.id), token.eq(EDIT_ALL)),
                 ])
                 .execute(conn)
                 .unwrap();

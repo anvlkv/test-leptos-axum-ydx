@@ -16,18 +16,28 @@ pub struct User {
     pub password: String,
 }
 
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, sqlx::FromRow))]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::permissions))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct PermissionTokens {
+    pub id: IdType,
+    pub token: String,
+    pub user_id: IdType,
+}
+
 #[cfg(feature = "ssr")]
 pub mod ssr {
     use std::collections::HashSet;
 
     use super::*;
 
-    use crate::user::{ssr::SqlPermissionTokens, UserPasshash};
+    use crate::user::UserPasshash;
 
     impl User {
         pub fn into_user(
             self,
-            sql_user_perms: Option<Vec<SqlPermissionTokens>>,
+            sql_user_perms: Option<Vec<PermissionTokens>>,
         ) -> (crate::user::User, UserPasshash) {
             (
                 crate::user::User {

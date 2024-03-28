@@ -1,5 +1,6 @@
 mod dashboard;
 mod home;
+mod loading;
 mod login;
 mod logout;
 mod reports;
@@ -16,7 +17,7 @@ use error_template::{AppError, ErrorTemplate};
 use home::HomePage;
 use login::Login;
 use reports::Reports;
-use users::Users;
+use users::{EditUser, Users};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -42,6 +43,7 @@ pub fn App() -> impl IntoView {
 
         <Stylesheet id="reset" href="https://unpkg.com/scss-reset/reset.css"/>
         <Stylesheet id="leptos" href="/pkg/start-axum-workspace.css"/>
+        <Script src="https://kit.fontawesome.com/f875badde1.js" crossorigin="anonymous"></Script>
 
         <Title text="Тестовое задание"/>
 
@@ -50,10 +52,8 @@ pub fn App() -> impl IntoView {
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen flex flex-wrap">
-                <Suspense
-                        fallback=move || view! { <p>"Loading..."</p> }
-                    >
+            <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen overflow-hidden flex flex-wrap">
+                <Suspense fallback=loading::Loading >
                     <Routes>
                         <Route path="/login" view=move || view!{ <Login action=login/> }/>
                         <ProtectedRoute
@@ -64,6 +64,8 @@ pub fn App() -> impl IntoView {
                                 <Route path="" view=Dashboard/>
                                 <Route path="reports" view=Reports/>
                                 <Route path="users" view=Users/>
+                                <Route path="users/new-user" view=EditUser/>
+                                <Route path="users/:id" view=EditUser/>
                         </ProtectedRoute>
                     </Routes>
                 </Suspense>

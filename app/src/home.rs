@@ -20,25 +20,28 @@ pub fn HomePage(user: Signal<User>) -> impl IntoView {
     };
 
     view! {
-        <div class="w-full h-full grid auto-rows-min md:grid-cols-3 lg:grid-cols-5 items-stretch">
-            <header class="md:col-span-3 lg:col-span-5 items-center flex justify-between py-2 px-4 bg-slate-200 dark:bg-slate-800 border-solid border-b-2 border-slate-500">
-                <p>{u_name}</p>
+        <div class="home-grid-layout w-full h-full md:grid-cols-3 lg:grid-cols-5 items-stretch">
+            <header class="h-14 md:col-span-3 lg:col-span-5 items-center flex justify-end py-2 px-4 bg-slate-200 dark:bg-slate-800 border-solid border-b-2 border-slate-500">
+                <A href=move || format!("users/{}", user().id) class="mx-4" >{u_name}</A>
                 <Logout action=logout/>
             </header>
-            <aside class="col-span-1 row-start-auto bg-slate-200 dark:bg-slate-800 border-solid border-r-2 border-slate-500">
+            <aside class="col-span-1 row-span-2 bg-slate-200 dark:bg-slate-800 border-solid border-r-2 border-slate-500">
                 <nav class="flex flex-col">
-                    <A href="./" class="p-4 border-solid border-b border-slate-500" active_class="text-indigo-500 pointer-events-none">
+                    <A href="" class="p-4 border-solid border-b border-slate-500" active_class="text-indigo-500 pointer-events-none">
+                        <i class="fa-solid fa-chart-line pr-2"></i>
                         {"Сводный отчет"}
                     </A>
                     <A href="reports" class="p-4 border-solid border-b border-slate-500" active_class="text-indigo-500 pointer-events-none">
+                    <i class="fa-solid fa-file-invoice pr-2"></i>
                         {"Индивидуальные отчеты"}
                     </A>
                     <A href="users" class="p-4 border-solid border-b border-slate-500" active_class="text-indigo-500 pointer-events-none">
+                        <i class="fa-solid fa-user-tie pr-2"></i>
                         {"Менеджеры"}
                     </A>
                 </nav>
             </aside>
-            <section class="md:col-span-2 lg:col-span-4 p-4">
+            <section class="md:col-span-2 lg:col-span-4 row-span-2 overflow-y-auto">
                 <Outlet/>
             </section>
         </div>

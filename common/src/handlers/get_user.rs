@@ -1,0 +1,47 @@
+use crate::{models, perms::MANAGE_USERS, user, IdType};
+
+use leptos::*;
+
+#[server(GetUser, "/api")]
+pub async fn get_user(id: IdType) -> Result<user::User, ServerFnError> {
+    use crate::ctx::{auth, d_pool, pool};
+    use axum_session_auth::HasPermission;
+    use diesel::prelude::*;
+
+    let pool = pool().ok();
+    let auth = auth()?;
+
+    if let Some(user) = auth.current_user.as_ref() {
+        let can_manage_users = user.has(MANAGE_USERS, &pool.as_ref()).await;
+        if can_manage_users || user.id == id {
+            // use crate::schema::permissions::dsl as perm_dsl;
+            use crate::schema::users::dsl as users_dsl;
+
+            let pool = d_pool()?;
+            let conn = pool.get().await?;
+
+            let user_data = conn
+                .interact(move |conn| {
+                    users_dsl::users
+                        .filter(users_dsl::id.eq(id))
+                        .select(models::User::as_select())
+                        .limit(1)
+                        .load::<models::User>(conn)
+                        .map(|u| u.first().cloned())
+                })
+                .await??;
+
+            if let Some(data) = user_data {
+                return Ok(data.into_user(None).0);
+            } else {
+                return Err(ServerFnError::ServerError(
+                    "Пользователь не найден.".to_string(),
+                ));
+            }
+        }
+    }
+
+    Err(ServerFnError::ServerError(
+        "Пользователь не авторизован для редактирования этого пользователя".to_string(),
+    ))
+}

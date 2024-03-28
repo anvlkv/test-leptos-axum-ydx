@@ -1,5 +1,6 @@
 use axum_session::SessionPgPool;
 use axum_session_auth::AuthSession;
+use deadpool_diesel::postgres::Pool;
 use leptos::*;
 use sqlx::PgPool;
 
@@ -9,6 +10,10 @@ pub type AppAuthSession = AuthSession<crate::user::User, IdType, SessionPgPool, 
 
 pub fn pool() -> Result<PgPool, ServerFnError> {
     use_context::<PgPool>().ok_or_else(|| ServerFnError::ServerError("Pool missing.".into()))
+}
+
+pub fn d_pool() -> Result<Pool, ServerFnError> {
+    use_context::<Pool>().ok_or_else(|| ServerFnError::ServerError("Pool missing.".into()))
 }
 
 pub fn auth() -> Result<AppAuthSession, ServerFnError> {
