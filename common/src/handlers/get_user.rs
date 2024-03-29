@@ -14,7 +14,7 @@ pub async fn get_user(id: IdType) -> Result<user::User, ServerFnError> {
     if let Some(user) = auth.current_user.as_ref() {
         let can_manage_users = user.has(MANAGE_USERS, &pool.as_ref()).await;
         if can_manage_users || user.id == id {
-            // use crate::schema::permissions::dsl as perm_dsl;
+            use crate::schema::permissions::dsl as perm_dsl;
             use crate::schema::users::dsl as users_dsl;
 
             let pool = d_pool()?;
@@ -32,7 +32,17 @@ pub async fn get_user(id: IdType) -> Result<user::User, ServerFnError> {
                 .await??;
 
             if let Some(data) = user_data {
-                return Ok(data.into_user(None).0);
+                let id = data.id;
+                let perms = conn
+                    .interact(move |conn| {
+                        perm_dsl::permissions
+                            .filter(perm_dsl::user_id.eq(id))
+                            .select(models::PermissionTokens::as_select())
+                            .load::<models::PermissionTokens>(conn)
+                    })
+                    .await??;
+
+                return Ok(data.into_user(Some(perms)).0);
             } else {
                 return Err(ServerFnError::ServerError(
                     "Пользователь не найден.".to_string(),

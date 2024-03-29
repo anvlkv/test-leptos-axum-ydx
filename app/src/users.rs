@@ -1,5 +1,6 @@
 use common::{
     handlers::{ListUsers, NewUser, UpdateUser},
+    perms::MANAGE_USERS,
     user::User,
     IdType,
 };
@@ -47,7 +48,7 @@ pub fn Users() -> impl IntoView {
                                             <td class="p-2">{user.name}</td>
                                             <td class="p-2">{user.patronym}</td>
                                             <td class="p-2">{user.username}</td>
-                                            <td class="p-2 pr-8 text-right">
+                                            <td class="p-2 pr-6 text-right">
                                                 <A href=format!("{}",user.id) class="px-2 py-1 border border-solid border-slate-500 rounded-sm">
                                                     <i title="Редактировать" class="fa-solid fa-pen-to-square"></i>
                                                 </A>
@@ -96,11 +97,28 @@ pub fn EditUser() -> impl IntoView {
         move || params.with(|p| p.as_ref().map(|p| p.id).ok().flatten()),
         move |id: Option<IdType>| async move {
             match id {
-                Some(id) => Some(common::handlers::get_user(id).await),
-                None => None,
+                Some(id) => common::handlers::get_user(id).await.unwrap_or_default(),
+                None => User::default(),
             }
         },
     );
+
+    let current_user = use_context::<Signal<User>>().unwrap();
+
+    let can_change_perms = move || {
+        let u = current_user();
+        params.with(|p| match p.as_ref().map(|p| p.id).ok().flatten() {
+            Some(id) => id != u.id,
+            None => true,
+        }) && u.permissions.contains(MANAGE_USERS)
+    };
+
+    let is_admin = move || {
+        user_data()
+            .unwrap_or_default()
+            .permissions
+            .contains(MANAGE_USERS)
+    };
 
     let form_content = view! {
         <Transition fallback=Loading>
@@ -112,7 +130,7 @@ pub fn EditUser() -> impl IntoView {
                     placeholder="Фамилия"
                     maxlength="250"
                     name="family_name"
-                    value=move || user_data().flatten().map(|u| u.map(|u| u.family_name).ok()).unwrap_or_default()
+                    value=move || user_data().unwrap_or_default().family_name
                     autocomplete="off"
                     class="w-full text-xl rounded p-4 !bg-transparent !text-inherit dark:!text-inherit border border-slate-500"/>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Фамилия:"</span>
@@ -123,7 +141,7 @@ pub fn EditUser() -> impl IntoView {
                     placeholder="Имя"
                     maxlength="250"
                     name="name"
-                    value=move || user_data().flatten().map(|u| u.map(|u| u.name).ok()).unwrap_or_default()
+                    value=move || user_data().unwrap_or_default().name
                     autocomplete="off"
                     class="w-full text-xl rounded p-4 !bg-transparent !text-inherit dark:!text-inherit border border-slate-500"/>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Имя:"</span>
@@ -134,7 +152,7 @@ pub fn EditUser() -> impl IntoView {
                     placeholder="Отчество"
                     maxlength="250"
                     name="patronym"
-                    value=move || user_data().flatten().map(|u| u.map(|u| u.patronym).ok()).unwrap_or_default()
+                    value=move || user_data().unwrap_or_default().patronym
                     autocomplete="off"
                     class="w-full text-xl rounded p-4 !bg-transparent !text-inherit dark:!text-inherit border border-slate-500"/>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Отчество:"</span>
@@ -148,7 +166,7 @@ pub fn EditUser() -> impl IntoView {
                     placeholder="Логин"
                     maxlength="250"
                     name="username"
-                    value=move || user_data().flatten().map(|u| u.map(|u| u.username).ok()).unwrap_or_default()
+                    value=move || user_data().unwrap_or_default().username
                     autocomplete="off"
                     class="w-full text-xl rounded p-4 !bg-transparent !text-inherit dark:!text-inherit border border-slate-500"/>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Логин:"</span>
@@ -162,16 +180,18 @@ pub fn EditUser() -> impl IntoView {
                     class="text-input-autofill w-full text-xl rounded p-4 !bg-transparent !text-inherit dark:!text-inherit border border-slate-500"/>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Пароль:"</span>
             </label>
-            <hr class="my-2"/>
-            <h3 class="text-lg mb-2">"Уровень доступа:"</h3>
 
-            <label class="w-full pb-8 flex items-center">
-                <input type="checkbox" name="is_admin" class="h-6 w-6"/>
-                <span class="pl-4 flex flex-col">
-                    <span class="block mb-1">"Администратор"</span>
-                    <small class="block">"Администратор может добавлять новых пользователей и просматривать всю отчетность."</small>
-                </span>
-            </label>
+            <Show when=can_change_perms>
+                <hr class="my-2"/>
+                <h3 class="text-lg mb-2">"Уровень доступа:"</h3>
+                <label class="w-full pb-8 flex items-center">
+                    <input type="checkbox" checked={is_admin} name="is_admin" class="h-6 w-6"/>
+                    <span class="pl-4 flex flex-col">
+                        <span class="block mb-1">"Администратор"</span>
+                        <small class="block">"Администратор может добавлять новых пользователей и просматривать всю отчетность."</small>
+                    </span>
+                </label>
+            </Show>
         </Transition>
     };
 

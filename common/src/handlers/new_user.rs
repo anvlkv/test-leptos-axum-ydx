@@ -1,7 +1,3 @@
-use crate::{
-    models,
-    perms::{EDIT_ALL, EDIT_OWNED, MANAGE_USERS},
-};
 use leptos::*;
 
 #[server(NewUser, "/api")]
@@ -13,7 +9,11 @@ pub async fn new_user(
     patronym: Option<String>,
     is_admin: Option<String>,
 ) -> Result<(), ServerFnError> {
-    use crate::ctx::{auth, d_pool, pool};
+    use crate::{
+        ctx::{auth, d_pool, pool},
+        models,
+        perms::{EDIT_ALL, EDIT_OWNED, MANAGE_USERS},
+    };
     use axum_session_auth::HasPermission;
     use bcrypt::{hash, DEFAULT_COST};
     use diesel::{insert_into, ExpressionMethods, RunQueryDsl};

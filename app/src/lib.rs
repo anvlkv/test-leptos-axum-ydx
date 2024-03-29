@@ -16,7 +16,7 @@ use dashboard::Dashboard;
 use error_template::{AppError, ErrorTemplate};
 use home::HomePage;
 use login::Login;
-use reports::Reports;
+use reports::{EditReport, Reports};
 use users::{EditUser, Users};
 
 #[component]
@@ -37,6 +37,8 @@ pub fn App() -> impl IntoView {
             .flatten()
             .unwrap_or_default()
     });
+
+    provide_context(u_signal.clone());
 
     view! {
         <Html lang="ru"/>
@@ -63,6 +65,8 @@ pub fn App() -> impl IntoView {
                             view=move || view!{ <HomePage user=u_signal /> }>
                                 <Route path="" view=Dashboard/>
                                 <Route path="reports" view=Reports/>
+                                <Route path="reports/:id" view=EditReport/>
+                                <Route path="new-report" view=EditReport/>
                                 <Route path="users" view=Users/>
                                 <Route path="users/new-user" view=EditUser/>
                                 <Route path="users/:id" view=EditUser/>
