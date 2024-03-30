@@ -9,23 +9,23 @@ pub async fn new_user(
     patronym: Option<String>,
     is_admin: Option<String>,
 ) -> Result<(), ServerFnError> {
+    use axum_session_auth::HasPermission;
+    use bcrypt::{hash, DEFAULT_COST};
+    use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
+
+    use crate::schema::permissions::dsl as perm_dsl;
+    use crate::schema::users::dsl as users_dsl;
     use crate::{
         ctx::{auth, d_pool, pool},
         models,
         perms::{EDIT_OWNED, MANAGE_USERS, VIEW_ALL, VIEW_OWNED},
     };
-    use axum_session_auth::HasPermission;
-    use bcrypt::{hash, DEFAULT_COST};
-    use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
 
     let pool = pool().ok();
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
         if user.has(MANAGE_USERS, &pool.as_ref()).await {
-            use crate::schema::permissions::dsl as perm_dsl;
-            use crate::schema::users::dsl as users_dsl;
-
             let pool = d_pool()?;
             let conn = pool.get().await?;
             let pwd = hash(password, DEFAULT_COST)?;

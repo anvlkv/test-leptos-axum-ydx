@@ -1,9 +1,8 @@
-use crate::{perms::MANAGE_USERS, IdType};
 use leptos::*;
 
 #[server(UpdateUser, "/api")]
 pub async fn update_user(
-    id: IdType,
+    id: crate::IdType,
     username: String,
     password: Option<String>,
     name: String,
@@ -11,10 +10,13 @@ pub async fn update_user(
     patronym: Option<String>,
     // is_admin: Option<String>,
 ) -> Result<(), ServerFnError> {
-    use crate::ctx::{auth, d_pool, pool};
     use axum_session_auth::HasPermission;
     use bcrypt::{hash, DEFAULT_COST};
     use diesel::{update, ExpressionMethods, RunQueryDsl};
+
+    use crate::ctx::{auth, d_pool, pool};
+    use crate::perms::MANAGE_USERS;
+    use crate::schema::users::dsl as users_dsl;
 
     let pool = pool().ok();
     let auth = auth()?;
@@ -23,7 +25,6 @@ pub async fn update_user(
         let can_manage_users = user.has(MANAGE_USERS, &pool.as_ref()).await;
         if can_manage_users || user.id == id {
             // use crate::schema::permissions::dsl as perm_dsl;
-            use crate::schema::users::dsl as users_dsl;
 
             let pool = d_pool()?;
             let conn = pool.get().await?;

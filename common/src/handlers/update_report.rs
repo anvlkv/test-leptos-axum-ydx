@@ -1,39 +1,35 @@
-use chrono::{Datelike, NaiveDate, Utc};
-use diesel::data_types::Cents;
 use leptos::*;
-
-use crate::{models, IdType};
 
 #[server(UpdateReport, "/api")]
 pub async fn update_report(
-    id: IdType,
+    id: crate::IdType,
     revenue: i64,
     address: String,
-    date: String,
+    date: chrono::NaiveDate,
 ) -> Result<(), ServerFnError> {
+    use axum_session_auth::HasPermission;
+    use chrono::{Datelike, NaiveDate, Utc};
+    use diesel::data_types::Cents;
+    use diesel::{update, ExpressionMethods, RunQueryDsl};
+
+    use crate::schema::entries::dsl as entries_dsl;
     use crate::{
         ctx::{auth, d_pool, pool},
         perms::EDIT_OWNED,
     };
-    use axum_session_auth::HasPermission;
-    use diesel::{update, ExpressionMethods, RunQueryDsl};
 
     let pool = pool().ok();
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
         if user.has(EDIT_OWNED, &pool.as_ref()).await {
-            use crate::schema::entries::dsl as entries_dsl;
-
             let pool = d_pool()?;
             let conn = pool.get().await?;
-
-            let form_date = NaiveDate::parse_from_str(date.as_str(), "%Y-%m-%d")?;
 
             let now = Utc::now().date_naive();
             let min_date = NaiveDate::from_ymd_opt(now.year(), now.month(), 1).unwrap();
 
-            if form_date < min_date || form_date > now {
+            if date < min_date || date > now {
                 return Err(ServerFnError::Request(
                     "Дата за пределами допустимой".to_string(),
                 ));
@@ -41,7 +37,7 @@ pub async fn update_report(
 
             let user_id = user.id;
 
-            let entry = conn
+            _ = conn
                 .interact(move |conn| {
                     update(entries_dsl::entries)
                         .filter(entries_dsl::by_user_id.eq(user_id))
@@ -51,11 +47,11 @@ pub async fn update_report(
                             entries_dsl::revenue.eq(Cents(revenue)),
                             entries_dsl::address.eq(address),
                         ))
-                        .get_result::<models::Entry>(conn)
+                        .execute(conn)
                 })
                 .await??;
 
-            leptos_axum::redirect(format!("/reports/{}", entry.id).as_str());
+            leptos_axum::redirect("/reports");
 
             return Ok(());
         }

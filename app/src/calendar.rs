@@ -65,7 +65,7 @@ pub fn Calendar(year: RwSignal<Option<i32>>, month: RwSignal<Option<u32>>) -> im
                     <input type="radio"
                         value={month_opt.0}
                         name={"month"}
-                        cheked={move || month_opt.0 == month().unwrap_or_default()}
+                        checked={move || month_opt.0 == month().unwrap_or_default()}
                     />
                     <span class="ml-1">{month_opt.1}</span>
                 </label>

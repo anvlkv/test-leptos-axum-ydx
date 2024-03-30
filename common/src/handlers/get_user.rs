@@ -1,12 +1,14 @@
-use crate::{models, perms::MANAGE_USERS, user, IdType};
-
 use leptos::*;
 
-#[server(GetUser, "/api")]
-pub async fn get_user(id: IdType) -> Result<user::User, ServerFnError> {
-    use crate::ctx::{auth, d_pool, pool};
+#[server(GetUser, "/api", "GetJson")]
+pub async fn get_user(id: crate::IdType) -> Result<crate::user::User, ServerFnError> {
     use axum_session_auth::HasPermission;
     use diesel::prelude::*;
+
+    use crate::ctx::{auth, d_pool, pool};
+    use crate::schema::permissions::dsl as perm_dsl;
+    use crate::schema::users::dsl as users_dsl;
+    use crate::{models, perms::MANAGE_USERS};
 
     let pool = pool().ok();
     let auth = auth()?;
@@ -14,9 +16,6 @@ pub async fn get_user(id: IdType) -> Result<user::User, ServerFnError> {
     if let Some(user) = auth.current_user.as_ref() {
         let can_manage_users = user.has(MANAGE_USERS, &pool.as_ref()).await;
         if can_manage_users || user.id == id {
-            use crate::schema::permissions::dsl as perm_dsl;
-            use crate::schema::users::dsl as users_dsl;
-
             let pool = d_pool()?;
             let conn = pool.get().await?;
 

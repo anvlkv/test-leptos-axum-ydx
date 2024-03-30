@@ -77,14 +77,12 @@ fn cents_de<'de, D>(deser: D) -> Result<Cents, D::Error>
 where
     D: Deserializer<'de>,
 {
-    log::debug!("cents_de");
-    Ok(Cents((f64::deserialize(deser)? * 100.0) as i64))
+    Ok(Cents(i64::deserialize(deser)?))
 }
 
 fn cents_ser<S>(value: &Cents, ser: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    log::debug!("cents_ser");
-    (value.0 as f64 / 100.0).serialize(ser)
+    value.0.serialize(ser)
 }

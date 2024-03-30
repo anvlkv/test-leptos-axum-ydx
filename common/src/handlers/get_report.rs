@@ -1,23 +1,21 @@
-use crate::{
-    models,
-    perms::{VIEW_ALL, VIEW_OWNED},
-    IdType,
-};
-
 use leptos::*;
 
-#[server(GetReport, "/api")]
-pub async fn get_report(id: IdType) -> Result<models::Entry, ServerFnError> {
-    use crate::ctx::{auth, d_pool, pool};
+#[server(GetReport, "/api", "GetJson")]
+pub async fn get_report(id: crate::IdType) -> Result<crate::models::Entry, ServerFnError> {
     use axum_session_auth::HasPermission;
     use diesel::prelude::*;
+
+    use crate::ctx::{auth, d_pool, pool};
+    use crate::schema::entries::dsl as entries_dsl;
+    use crate::{
+        models,
+        perms::{VIEW_ALL, VIEW_OWNED},
+    };
 
     let pool = pool().ok();
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        use crate::schema::entries::dsl as entries_dsl;
-
         let can_view_others = user.has(VIEW_ALL, &pool.as_ref()).await;
         let can_view_owned = user.has(VIEW_OWNED, &pool.as_ref()).await;
 

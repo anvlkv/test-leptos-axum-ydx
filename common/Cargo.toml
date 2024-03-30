@@ -13,7 +13,7 @@ axum_session_auth = { version = "0.13.0", features = [
     "postgres-rustls",
 ], optional = true }
 bcrypt = { version = "0.15.1", optional = true }
-chrono = { vesrion = "0.4.35", features = ["serde"] }
+chrono = { version = "0.4.37", features = ["serde"] }
 deadpool-diesel = { version = "0.5.0", features = [
     "serde",
     "postgres",

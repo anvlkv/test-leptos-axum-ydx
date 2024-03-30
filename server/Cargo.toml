@@ -12,7 +12,7 @@ axum = { workspace = true, features = ["macros"] }
 axum_session = { version = "0.13.0", features = ["postgres-rustls"] }
 axum_session_auth = { version = "0.13.0", features = ["postgres-rustls"] }
 bcrypt = { version = "0.15.1" }
-chrono = { vesrion = "0.4.35", features = ["serde"] }
+chrono = { version = "0.4.37", features = ["serde"] }
 dotenvy = "0.15"
 diesel = { version = "2.1.0", features = ["postgres", "chrono"] }
 deadpool-diesel = { version = "0.5.0", features = ["serde", "postgres"] }

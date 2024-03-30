@@ -6,9 +6,10 @@ pub async fn login(
     password: String,
     remember: Option<String>,
 ) -> Result<(), ServerFnError> {
+    use bcrypt::verify;
+
     use crate::ctx::{auth, pool};
     use crate::user::{User, UserPasshash};
-    use bcrypt::verify;
 
     let pool = pool()?;
     let auth = auth()?;

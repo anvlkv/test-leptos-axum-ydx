@@ -1,25 +1,24 @@
-use std::collections::BTreeMap;
-
-use chrono::Datelike;
 use leptos::*;
 
-use crate::models;
-
-#[server(ListDates, "/api")]
+#[server(ListDates, "/api", "GetJson")]
 pub async fn list_dates() -> Result<Vec<(i32, Vec<u32>)>, ServerFnError> {
+    use std::collections::BTreeMap;
+
+    use axum_session_auth::HasPermission;
+    use chrono::Datelike;
+    use diesel::prelude::*;
+
+    use crate::schema::entries::dsl as entries_dsl;
     use crate::{
         ctx::{auth, d_pool, pool},
+        models,
         perms::{VIEW_ALL, VIEW_OWNED},
     };
-    use axum_session_auth::HasPermission;
-    use diesel::prelude::*;
 
     let s_pool = pool().ok();
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        use crate::schema::entries::dsl as entries_dsl;
-
         let user_id = user.id;
 
         let can_view_others = user.has(VIEW_ALL, &s_pool.as_ref()).await;

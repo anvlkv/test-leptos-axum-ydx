@@ -1,23 +1,20 @@
-use chrono::NaiveDate;
 use leptos::*;
 
-use crate::{models, IdType};
-
-#[server(ListReports, "/api")]
+#[server(ListReports, "/api", "GetJson")]
 pub async fn list_reports(
     year: i32,
     month: u32,
-    owner_id: Option<IdType>,
-) -> Result<Vec<models::Entry>, ServerFnError> {
-    use crate::schema::entries::dsl as entries_dsl;
-    use crate::schema::users::table as users_tabel;
-    use crate::{
-        ctx::{auth, d_pool, pool},
-        models::entry::month_range,
-        perms::{VIEW_ALL, VIEW_OWNED},
-    };
+    owner_id: Option<crate::IdType>,
+) -> Result<Vec<crate::models::Entry>, ServerFnError> {
     use axum_session_auth::HasPermission;
     use diesel::prelude::*;
+
+    use crate::schema::entries::dsl as entries_dsl;
+    use crate::{
+        ctx::{auth, d_pool, pool},
+        models::{self, entry::month_range},
+        perms::{VIEW_ALL, VIEW_OWNED},
+    };
 
     let s_pool = pool().ok();
     let auth = auth()?;

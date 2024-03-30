@@ -141,6 +141,7 @@ dependencies = [
  "leptos_router",
  "log",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]

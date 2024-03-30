@@ -1,15 +1,15 @@
-use crate::{
-    models,
-    perms::{EDIT_OWNED, MANAGE_USERS},
-    user,
-};
 use leptos::*;
 
-#[server(ListUsers, "/api")]
-pub async fn list_users(managers_only: bool) -> Result<Vec<user::User>, ServerFnError> {
-    use crate::ctx::{auth, d_pool, pool};
+#[server(ListUsers, "/api", "GetJson")]
+pub async fn list_users(managers_only: bool) -> Result<Vec<crate::user::User>, ServerFnError> {
     use axum_session_auth::HasPermission;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+
+    use crate::ctx::{auth, d_pool, pool};
+    use crate::{
+        models,
+        perms::{EDIT_OWNED, MANAGE_USERS},
+    };
 
     let pool = pool().ok();
     let auth = auth()?;
