@@ -6,6 +6,7 @@ pub async fn logout() -> Result<(), ServerFnError> {
 
     let auth = auth()?;
 
+    auth.remember_user(false);
     auth.logout_user();
     leptos_axum::redirect("/login");
 

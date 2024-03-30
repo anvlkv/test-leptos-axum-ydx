@@ -27,7 +27,7 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<common::handlers::Login>();
     let logout = create_server_action::<common::handlers::Logout>();
 
-    let user = create_blocking_resource(
+    let user = create_resource(
         move || (login.version().get(), logout.version().get()),
         move |_| common::user::get_user(),
     );
@@ -40,6 +40,12 @@ pub fn App() -> impl IntoView {
     });
 
     provide_context(u_signal.clone());
+
+    let auth_guard = move || {
+        user()
+            .map(|s| s.map(|u| u.is_some()).unwrap_or_default())
+            .unwrap_or(true)
+    };
 
     view! {
         <Html lang="ru"/>
@@ -61,7 +67,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/login" view=move || view!{ <Login action=login/> }/>
                         <ProtectedRoute
                             path="/"
-                            condition={move || user().map(|s| s.map(|u| u.is_some()).unwrap_or_default()).unwrap_or(true)}
+                            condition={auth_guard}
                             redirect_path="/login"
                             view=move || view!{ <HomePage user=u_signal /> }>
                                 <Route path="" view=Dashboard/>
