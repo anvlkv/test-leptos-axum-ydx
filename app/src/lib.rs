@@ -1,3 +1,4 @@
+mod calendar;
 mod dashboard;
 mod home;
 mod loading;
@@ -26,7 +27,7 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<common::handlers::Login>();
     let logout = create_server_action::<common::handlers::Logout>();
 
-    let user = create_resource(
+    let user = create_blocking_resource(
         move || (login.version().get(), logout.version().get()),
         move |_| common::user::get_user(),
     );
@@ -60,13 +61,13 @@ pub fn App() -> impl IntoView {
                         <Route path="/login" view=move || view!{ <Login action=login/> }/>
                         <ProtectedRoute
                             path="/"
-                            condition={move || user().map(|s| s.map(|u| u.is_some()).unwrap_or_default()).unwrap_or_default()}
+                            condition={move || user().map(|s| s.map(|u| u.is_some()).unwrap_or_default()).unwrap_or(true)}
                             redirect_path="/login"
                             view=move || view!{ <HomePage user=u_signal /> }>
                                 <Route path="" view=Dashboard/>
                                 <Route path="reports" view=Reports/>
+                                <Route path="reports/new-report" view=EditReport/>
                                 <Route path="reports/:id" view=EditReport/>
-                                <Route path="new-report" view=EditReport/>
                                 <Route path="users" view=Users/>
                                 <Route path="users/new-user" view=EditUser/>
                                 <Route path="users/:id" view=EditUser/>

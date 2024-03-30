@@ -1,10 +1,14 @@
 #[cfg(feature = "ssr")]
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::IdType;
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, sqlx::FromRow))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    feature = "ssr",
+    derive(Queryable, Selectable, Identifiable, sqlx::FromRow)
+)]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::users))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct User {
@@ -17,8 +21,12 @@ pub struct User {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, sqlx::FromRow))]
+#[cfg_attr(
+    feature = "ssr",
+    derive(Queryable, Selectable, sqlx::FromRow, Identifiable, Associations)
+)]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::permissions))]
+#[cfg_attr(feature = "ssr", diesel(belongs_to(crate::schema::users::table, foreign_key = user_id)))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct PermissionTokens {
     pub id: IdType,
@@ -35,7 +43,7 @@ pub mod ssr {
     use crate::user::UserPasshash;
 
     impl User {
-        pub fn into_user(
+        pub fn into_user_with_password(
             self,
             sql_user_perms: Option<Vec<PermissionTokens>>,
         ) -> (crate::user::User, UserPasshash) {

@@ -1,8 +1,12 @@
-use crate::{models, perms::MANAGE_USERS, user::User};
+use crate::{
+    models,
+    perms::{EDIT_OWNED, MANAGE_USERS},
+    user,
+};
 use leptos::*;
 
 #[server(ListUsers, "/api")]
-pub async fn list_users() -> Result<Vec<User>, ServerFnError> {
+pub async fn list_users(managers_only: bool) -> Result<Vec<user::User>, ServerFnError> {
     use crate::ctx::{auth, d_pool, pool};
     use axum_session_auth::HasPermission;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
@@ -50,9 +54,14 @@ pub async fn list_users() -> Result<Vec<User>, ServerFnError> {
             return Ok(result_users
                 .into_iter()
                 .zip(result_perms)
-                .map(|(u, p)| u.into_user(Some(p)).0)
+                .map(|(u, p)| u.into_user_with_password(Some(p)).0)
+                .filter(|u| !managers_only || u.permissions.contains(EDIT_OWNED))
                 .collect());
+        } else {
+            log::error!("no permission");
         }
+    } else {
+        log::error!("no user");
     }
 
     Err(ServerFnError::ServerError(

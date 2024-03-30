@@ -2,19 +2,28 @@
 
 diesel::table! {
     entries (id) {
-        id -> Int4,
+        id -> Uuid,
         address -> Varchar,
         revenue -> Money,
         date -> Date,
-        by_user_id -> Int4,
+        by_user_id -> Uuid,
     }
 }
 
 diesel::table! {
     permissions (id) {
-        id -> Int4,
+        id -> Uuid,
         token -> Text,
-        user_id -> Int4,
+        user_id -> Uuid,
+    }
+}
+
+diesel::table! {
+    sessions (id) {
+        #[max_length = 128]
+        id -> Varchar,
+        expires -> Nullable<Int4>,
+        session -> Text,
     }
 }
 
@@ -29,7 +38,7 @@ diesel::table! {
 
 diesel::table! {
     users (id) {
-        id -> Int4,
+        id -> Uuid,
         #[max_length = 250]
         name -> Varchar,
         #[max_length = 250]
@@ -47,6 +56,7 @@ diesel::joinable!(permissions -> users (user_id));
 diesel::allow_tables_to_appear_in_same_query!(
     entries,
     permissions,
+    sessions,
     sessioons,
     users,
 );

@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
     let session_config = SessionConfig::default().with_table_name("sessions");
 
     let auth_config = AuthConfig::<IdType>::default()
-        .with_anonymous_user_id(Some(1))
+        .with_anonymous_user_id(Some(uuid::Uuid::nil()))
         .with_max_age(chrono::Duration::try_days(2).unwrap())
         .with_session_id("localhost");
 
@@ -133,7 +133,7 @@ async fn initial_setup(pool: &Pool, config: &Config) {
             _ = insert_into(permissions)
                 .values(vec![
                     (user_id.eq(admin.id), token.eq(MANAGE_USERS)),
-                    (user_id.eq(admin.id), token.eq(EDIT_ALL)),
+                    (user_id.eq(admin.id), token.eq(VIEW_ALL)),
                 ])
                 .execute(conn)
                 .unwrap();

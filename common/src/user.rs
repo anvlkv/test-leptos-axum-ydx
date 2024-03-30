@@ -53,7 +53,7 @@ pub mod ssr {
             .await
             .ok()?;
 
-            Some(sqluser.into_user(Some(sql_user_perms)))
+            Some(sqluser.into_user_with_password(Some(sql_user_perms)))
         }
 
         pub async fn get(id: IdType, pool: &PgPool) -> Option<Self> {
@@ -81,7 +81,7 @@ pub mod ssr {
             .await
             .ok()?;
 
-            Some(sqluser.into_user(Some(sql_user_perms)))
+            Some(sqluser.into_user_with_password(Some(sql_user_perms)))
         }
 
         pub async fn get_from_username(name: String, pool: &PgPool) -> Option<Self> {

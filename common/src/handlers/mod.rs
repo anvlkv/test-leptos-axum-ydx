@@ -1,13 +1,23 @@
+mod get_report;
 mod get_user;
+mod list_dates;
+mod list_reports;
 mod list_users;
 mod login;
 mod logout;
+mod new_report;
 mod new_user;
+mod update_report;
 mod update_user;
 
+pub use get_report::*;
 pub use get_user::*;
+pub use list_dates::*;
+pub use list_reports::*;
 pub use list_users::*;
 pub use login::*;
 pub use logout::*;
+pub use new_report::*;
 pub use new_user::*;
+pub use update_report::*;
 pub use update_user::*;

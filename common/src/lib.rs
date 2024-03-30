@@ -1,4 +1,4 @@
-pub type IdType = i32;
+pub type IdType = uuid::Uuid;
 
 #[cfg(feature = "ssr")]
 pub mod ctx;
@@ -10,3 +10,5 @@ pub mod perms;
 #[cfg(feature = "ssr")]
 pub mod schema;
 pub mod user;
+
+pub use chrono::Datelike;

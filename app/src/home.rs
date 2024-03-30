@@ -1,11 +1,11 @@
-use common::{perms::EDIT_ALL, user::User};
+use common::{perms::VIEW_ALL, user};
 use leptos::*;
 use leptos_router::{Outlet, A};
 
 use crate::logout::Logout;
 
 #[component]
-pub fn HomePage(user: Signal<User>) -> impl IntoView {
+pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
     let logout = create_server_action::<common::handlers::Logout>();
 
     let u_name = move || {
@@ -23,7 +23,7 @@ pub fn HomePage(user: Signal<User>) -> impl IntoView {
     let active_link_cls = "bg-indigo-50 dark:bg-indigo-950 text-indigo-500 pointer-events-none";
 
     let menu_content = move || {
-        if user().permissions.contains(EDIT_ALL) {
+        if user().permissions.contains(VIEW_ALL) {
             view! {
                 <A href="" class=link_cls active_class=active_link_cls>
                     <i class="fa-solid fa-chart-line pr-2"></i>
@@ -40,13 +40,13 @@ pub fn HomePage(user: Signal<User>) -> impl IntoView {
             }
         } else {
             view! {
-                <A href="new-report" class=link_cls active_class=active_link_cls>
-                    <i class="fa-solid fa-chart-line pr-2"></i>
-                    {"Добавить отчет"}
-                </A>
-                <A href="reports" class=link_cls active_class=active_link_cls>
-                <i class="fa-solid fa-file-invoice pr-2"></i>
+                <A href="" class=link_cls active_class=active_link_cls>
+                <i class="fa-solid fa-chart-line pr-2"></i>
                     {"Мои отчеты"}
+                </A>
+                <A href="reports/new-report" class=link_cls active_class=active_link_cls>
+                    <i class="fa-solid fa-file-invoice pr-2"></i>
+                    {"Добавить отчет"}
                 </A>
             }
         }

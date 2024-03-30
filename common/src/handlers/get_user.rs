@@ -42,7 +42,7 @@ pub async fn get_user(id: IdType) -> Result<user::User, ServerFnError> {
                     })
                     .await??;
 
-                return Ok(data.into_user(Some(perms)).0);
+                return Ok(data.into_user_with_password(Some(perms)).0);
             } else {
                 return Err(ServerFnError::ServerError(
                     "Пользователь не найден.".to_string(),

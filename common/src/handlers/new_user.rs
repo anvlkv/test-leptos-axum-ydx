@@ -12,7 +12,7 @@ pub async fn new_user(
     use crate::{
         ctx::{auth, d_pool, pool},
         models,
-        perms::{EDIT_ALL, EDIT_OWNED, MANAGE_USERS},
+        perms::{EDIT_OWNED, MANAGE_USERS, VIEW_ALL, VIEW_OWNED},
     };
     use axum_session_auth::HasPermission;
     use bcrypt::{hash, DEFAULT_COST};
@@ -43,9 +43,9 @@ pub async fn new_user(
                         .get_result(conn)?;
 
                     let permissions = if is_admin.is_some() {
-                        vec![MANAGE_USERS, EDIT_ALL]
+                        vec![MANAGE_USERS, VIEW_ALL]
                     } else {
-                        vec![EDIT_OWNED]
+                        vec![EDIT_OWNED, VIEW_OWNED]
                     };
 
                     _ = insert_into(perm_dsl::permissions)

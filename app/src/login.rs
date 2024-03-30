@@ -29,6 +29,7 @@ pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView 
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Пароль:"</span>
             </label>
             <br/>
+            // FIXME: remember_user doesn't work
             <label class="w-full pb-8 flex items-center">
                 <input type="checkbox" name="remember" class="h-6 w-6"/>
                 <span class="pl-4">"Запомнить меня на этом устройстве"</span>
