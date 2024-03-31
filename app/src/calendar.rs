@@ -80,11 +80,11 @@ pub fn Calendar(
 
     view! {
         <div class="w-full flex items-stretch bg-slate-50 dark:bg-slate-700">
-            <div class="w-1/2 md:w-1/3 lg:w-1/5">
+            <div class="w-1/2 md:w-1/3 lg:w-1/5 shrink-0">
                 <Dropdown name="year" label_text="Год:" options=year_options current_option=rw_year/>
             </div>
             <div class="h-full basis-1/2 grow flex flex-col-reverse">
-                <div class="flex items-center basis-8 shrink-0 grow text-xl rounded w-full !bg-transparent !text-inherit dark:!text-inherit border border-slate-500 p-2">
+                <div class="flex flex-wrap items-center basis-8 shrink-0 grow text-xl rounded w-full !bg-transparent !text-inherit dark:!text-inherit border border-slate-500 p-2">
                     {month_options}
                 </div>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-50 dark:bg-slate-700 inline-block">"Месяц:"</span>

@@ -1,4 +1,5 @@
 mod config;
+mod fixture;
 
 pub mod fileserv;
 
@@ -21,6 +22,7 @@ use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRou
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 use crate::config::config;
+use crate::fixture::make_fixture;
 
 #[derive(Clone, FromRef)]
 pub struct AppState {
@@ -95,15 +97,15 @@ async fn initial_setup(pool: &Pool, config: &Config) {
 
     run_migrations(pool).await;
 
-    use schema::{permissions::dsl::*, users::dsl::*};
+    use schema::{permissions::dsl as perm_dsl, users::dsl as users_dsl};
 
     // add admin user from env
     let conn = pool.get().await.unwrap();
     let admin_username = config.default_admin_user.clone();
     let admin: Vec<models::User> = conn
         .interact(move |conn| {
-            let query = users
-                .filter(username.eq(admin_username.as_str()))
+            let query = users_dsl::users
+                .filter(users_dsl::username.eq(admin_username.as_str()))
                 .limit(1)
                 .select(models::User::as_select());
 
@@ -118,19 +120,22 @@ async fn initial_setup(pool: &Pool, config: &Config) {
             bcrypt::hash(config.default_admin_password.as_str(), bcrypt::DEFAULT_COST).unwrap();
 
         conn.interact(move |conn| {
-            let admin = insert_into(users)
+            let admin = insert_into(users_dsl::users)
                 .values((
-                    username.eq(admin_username),
-                    password.eq(pwd),
-                    name.eq("Администратор"),
-                    family_name.eq("По умолчанию"),
+                    users_dsl::username.eq(admin_username),
+                    users_dsl::password.eq(pwd),
+                    users_dsl::name.eq("Администратор"),
+                    users_dsl::family_name.eq("По умолчанию"),
                 ))
                 .get_result::<models::User>(conn)
                 .unwrap();
-            _ = insert_into(permissions)
+            _ = insert_into(perm_dsl::permissions)
                 .values(vec![
-                    (user_id.eq(admin.id), token.eq(MANAGE_USERS)),
-                    (user_id.eq(admin.id), token.eq(VIEW_ALL)),
+                    (
+                        perm_dsl::user_id.eq(admin.id),
+                        perm_dsl::token.eq(MANAGE_USERS),
+                    ),
+                    (perm_dsl::user_id.eq(admin.id), perm_dsl::token.eq(VIEW_ALL)),
                 ])
                 .execute(conn)
                 .unwrap();
@@ -139,6 +144,10 @@ async fn initial_setup(pool: &Pool, config: &Config) {
         .unwrap();
 
         log::info!("Added admin user");
+    }
+
+    if config.create_fixtures {
+        make_fixture(pool, config).await;
     }
 }
 

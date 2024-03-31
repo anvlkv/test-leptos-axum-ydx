@@ -63,7 +63,7 @@ pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
                     {menu_content}
                 </nav>
             </aside>
-            <section class="md:col-span-2 lg:col-span-4 row-span-2 overflow-y-auto">
+            <section class="md:col-span-2 lg:col-span-4 row-span-2 overflow-y-auto pb-6">
                 <ErrorBoundary fallback=|errors| {
                     view! { <ErrorTemplate errors/> }.into_view()
                 }>

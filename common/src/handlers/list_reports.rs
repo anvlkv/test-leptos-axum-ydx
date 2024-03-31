@@ -54,7 +54,7 @@ pub async fn list_reports(
                     .select((models::Entry::as_select(), models::User::as_select()))
                     .filter(entries_dsl::date.ge(min_date))
                     .filter(entries_dsl::date.le(max_date))
-                    .order(entries_dsl::date.asc());
+                    .order(entries_dsl::date.desc());
 
                 if let Some(user_id) = user_id_filter {
                     query

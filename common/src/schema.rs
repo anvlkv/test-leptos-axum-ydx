@@ -28,15 +28,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    sessioons (id) {
-        #[max_length = 128]
-        id -> Varchar,
-        expires -> Nullable<Int4>,
-        session -> Text,
-    }
-}
-
-diesel::table! {
     users (id) {
         id -> Uuid,
         #[max_length = 250]
@@ -53,4 +44,9 @@ diesel::table! {
 diesel::joinable!(entries -> users (by_user_id));
 diesel::joinable!(permissions -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(entries, permissions, sessions, sessioons, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    entries,
+    permissions,
+    sessions,
+    users,
+);

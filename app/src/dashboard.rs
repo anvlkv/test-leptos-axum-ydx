@@ -123,7 +123,6 @@ pub fn Dashboard() -> impl IntoView {
 
 fn plural(number: usize, word: &str) -> String {
     match number.to_string().as_str() {
-        "1" => word.to_string(),
         n if n.ends_with("0")
             || n.ends_with("11")
             || n.ends_with("12")
@@ -137,6 +136,7 @@ fn plural(number: usize, word: &str) -> String {
         {
             format!("{word}ов")
         }
+        n if n.ends_with("1") => word.to_string(),
         n if n.ends_with("2") || n.ends_with("3") || n.ends_with("4") => format!("{word}a"),
         _ => format!("{word}ов"),
     }

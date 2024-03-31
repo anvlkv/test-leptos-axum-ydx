@@ -16,6 +16,8 @@ pub struct Config {
     pub db: DatabaseConfig,
     pub(crate) default_admin_user: String,
     pub(crate) default_admin_password: String,
+    pub(crate) demo_user_password: Option<String>,
+    pub(crate) create_fixtures: bool,
 }
 
 pub static CONFIG: OnceCell<Config> = OnceCell::const_new();
@@ -40,6 +42,8 @@ async fn init_config() -> Config {
         db: database_config,
         default_admin_user: env::var("ADMIN_USERNAME").expect("ADMIN_USERNAME must be set"),
         default_admin_password: env::var("ADMIN_PWD").expect("ADMIN_PWD must be set"),
+        create_fixtures: env::var("FIXTURES").map(|f| f == "true").unwrap_or(false),
+        demo_user_password: env::var("DEMO_PWD").ok(),
     }
 }
 

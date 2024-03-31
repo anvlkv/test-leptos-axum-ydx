@@ -29,7 +29,7 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<common::handlers::Login>();
     let logout = create_server_action::<common::handlers::Logout>();
 
-    let user = create_resource(
+    let user = create_blocking_resource(
         move || (login.version().get(), logout.version().get()),
         move |_| common::user::get_user(),
     );
@@ -63,7 +63,7 @@ pub fn App() -> impl IntoView {
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen overflow-hidden flex flex-wrap">
+            <main class="font-sans bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen overflow-hidden flex flex-wrap">
                 <Suspense fallback=loading::Loading>
                     <Routes>
                         <Route path="/login" view=move || view!{ <Login action=login/> }/>
