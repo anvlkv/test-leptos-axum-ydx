@@ -1,4 +1,4 @@
-use chrono::{Datelike, Days, Utc};
+use chrono::{Days, Utc};
 use common::schema::{
     entries::dsl as entries_dsl, permissions::dsl as perm_dsl, users::dsl as users_dsl,
 };

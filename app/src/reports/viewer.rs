@@ -1,8 +1,4 @@
-use common::{
-    perms::{EDIT_OWNED, VIEW_ALL, VIEW_OWNED},
-    user::User,
-    IdType,
-};
+use common::{perms::VIEW_ALL, user::User, IdType};
 use leptos::*;
 use leptos_router::{use_query, Params};
 

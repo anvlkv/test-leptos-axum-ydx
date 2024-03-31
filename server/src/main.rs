@@ -63,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
     let auth_config = AuthConfig::<IdType>::default()
         .with_anonymous_user_id(Some(uuid::Uuid::nil()))
         .with_max_age(chrono::Duration::try_days(2).unwrap())
-        .with_session_id("localhost");
+        .with_session_id("public-stage.a.nvlkv.online");
 
     let session_store =
         SessionStore::<SessionPgPool>::new(Some(state.s_pool.clone().into()), session_config)

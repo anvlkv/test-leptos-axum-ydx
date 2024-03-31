@@ -10,7 +10,6 @@ mod users;
 
 pub mod error_template;
 
-use common::perms::{MANAGE_USERS, VIEW_ALL};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -64,7 +63,7 @@ pub fn App() -> impl IntoView {
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
             <main class="font-sans bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen overflow-hidden flex flex-wrap">
-                <Suspense fallback=loading::Loading>
+                <Transition fallback=loading::Loading>
                     <Routes>
                         <Route path="/login" view=move || view!{ <Login action=login/> }/>
                         <ProtectedRoute
@@ -73,7 +72,7 @@ pub fn App() -> impl IntoView {
                             redirect_path="/login"
                             view=move || view!{ <HomePage user=u_signal /> }>
                                 <Route path="" view=Dashboard/>
-                                <Route path="reports" view=ReportsViewer ssr=SsrMode::PartiallyBlocked/>
+                                <Route path="reports" view=ReportsViewer/>
                                 <Route path="reports/new-report" view=EditReport/>
                                 <Route path="reports/:id" view=EditReport/>
                                 <Route path="users" view=Users/>
@@ -81,7 +80,7 @@ pub fn App() -> impl IntoView {
                                 <Route path="users/:id" view=EditUser/>
                         </ProtectedRoute>
                     </Routes>
-                </Suspense>
+                </Transition>
             </main>
         </Router>
     }
