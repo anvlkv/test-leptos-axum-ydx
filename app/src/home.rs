@@ -1,15 +1,17 @@
-use common::{perms::VIEW_ALL, user};
+use common::{perms::VIEW_ALL, user::User};
 use leptos::*;
 use leptos_router::{Outlet, A};
 
 use crate::{error_template::ErrorTemplate, logout::Logout};
 
 #[component]
-pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
+pub fn HomePage() -> impl IntoView {
     let logout = create_server_action::<common::handlers::Logout>();
 
+    let app_user = use_context::<Signal<User>>().unwrap();
+
     let u_name = move || {
-        let u = user();
+        let u = app_user();
 
         format!(
             "{} {} {}",
@@ -23,7 +25,7 @@ pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
     let active_link_cls = "bg-indigo-50 dark:bg-indigo-950 text-indigo-500 pointer-events-none";
 
     let menu_content = move || {
-        if user().permissions.contains(VIEW_ALL) {
+        if app_user().permissions.contains(VIEW_ALL) {
             view! {
                 <A href="" class=link_cls active_class=active_link_cls>
                     <i class="fa-solid fa-chart-line pr-2"></i>
@@ -38,6 +40,7 @@ pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
                     {"Менеджеры"}
                 </A>
             }
+            .into_view()
         } else {
             view! {
                 <A href="" class=link_cls active_class=active_link_cls>
@@ -49,13 +52,14 @@ pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
                     {"Добавить отчет"}
                 </A>
             }
+            .into_view()
         }
     };
 
     view! {
         <div class="home-grid-layout w-full h-full md:grid-cols-3 lg:grid-cols-5 items-stretch">
             <header class="h-14 md:col-span-3 lg:col-span-5 items-center flex justify-end py-2 px-4 bg-slate-200 dark:bg-slate-800 border-solid border-b-2 border-slate-500">
-                <A href=move || format!("users/{}", user().id) class="mx-4" >{u_name}</A>
+                <A href=move || format!("users/{}", app_user().id) class="mx-4" >{u_name}</A>
                 <Logout action=logout/>
             </header>
             <aside class="col-span-1 row-span-2 bg-slate-200 dark:bg-slate-800 border-solid border-r-2 border-slate-500">

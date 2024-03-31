@@ -33,19 +33,25 @@ pub fn App() -> impl IntoView {
         move |_| common::user::get_user(),
     );
 
-    let u_signal = Signal::derive(move || {
-        user.get()
-            .map(|s| s.ok().flatten())
-            .flatten()
-            .unwrap_or_default()
-    });
-
-    provide_context(u_signal.clone());
-
     let auth_guard = move || {
         user.get()
             .map(|s| s.map(|u| u.is_some()).unwrap_or_default())
             .unwrap_or(true)
+    };
+
+    let protected_view = move || {
+        let u_signal = Signal::derive(move || {
+            user.get()
+                .map(|s| s.ok().flatten())
+                .flatten()
+                .unwrap_or_default()
+        });
+        provide_context(u_signal.clone());
+        view! {
+            <Suspense>
+                <HomePage/>
+            </Suspense>
+        }
     };
 
     view! {
@@ -63,24 +69,23 @@ pub fn App() -> impl IntoView {
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
             <main class="font-sans bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen overflow-hidden flex flex-wrap">
-                <Transition fallback=loading::Loading>
-                    <Routes>
-                        <Route path="/login" view=move || view!{ <Login action=login/> }/>
-                        <ProtectedRoute
-                            path="/"
-                            condition={auth_guard}
-                            redirect_path="/login"
-                            view=move || view!{ <HomePage user=u_signal /> }>
-                                <Route path="" view=Dashboard/>
-                                <Route path="reports" view=ReportsViewer/>
-                                <Route path="reports/new-report" view=EditReport/>
-                                <Route path="reports/:id" view=EditReport/>
-                                <Route path="users" view=Users/>
-                                <Route path="users/new-user" view=EditUser/>
-                                <Route path="users/:id" view=EditUser/>
-                        </ProtectedRoute>
-                    </Routes>
-                </Transition>
+                <Routes>
+                    <Route path="/login" view=move || view!{ <Login action=login/> }/>
+                    <ProtectedRoute
+                        path="/"
+                        condition={auth_guard}
+                        redirect_path="/login"
+                        ssr=SsrMode::PartiallyBlocked
+                        view=protected_view>
+                            <Route path="" view=Dashboard/>
+                            <Route path="reports" view=ReportsViewer/>
+                            <Route path="reports/new-report" view=EditReport/>
+                            <Route path="reports/:id" view=EditReport/>
+                            <Route path="users" view=Users/>
+                            <Route path="users/new-user" view=EditUser/>
+                            <Route path="users/:id" view=EditUser/>
+                    </ProtectedRoute>
+                </Routes>
             </main>
         </Router>
     }

@@ -22,7 +22,7 @@ pub fn ReportsList(
     );
 
     view! {
-        <Suspense fallback=Loading>
+        <Transition fallback=Loading>
             {move || match reports.get() {
                     Some(Ok(reports)) => {
                         view!{
@@ -44,7 +44,7 @@ pub fn ReportsList(
                     }
                 }
             }
-        </Suspense>
+        </Transition>
     }
 }
 

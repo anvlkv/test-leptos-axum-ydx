@@ -53,8 +53,8 @@ pub fn EditUser() -> impl IntoView {
             .contains(MANAGE_USERS)
     };
 
-    let form_content = view! {
-        <Transition fallback=Loading>
+    let form_content = move || {
+        view! {
             <hr class="my-2"/>
             <h3 class="text-lg mb-2">"Данные пользователя:"</h3>
             <label class="w-full pb-8 flex flex-col-reverse">
@@ -125,50 +125,54 @@ pub fn EditUser() -> impl IntoView {
                     </span>
                 </label>
             </Show>
-        </Transition>
+        }
     };
 
-    params.with(|params| { match params.as_ref().map(|p| p.id).ok().flatten() {
-        Some(id) => {
-            view! {
-                <ActionForm action=update_user
-                    class="p-8 m-8 bg-slate-200 dark:bg-slate-800 rounded-lg"
-                    attributes=vec![("autocomplete", Attribute::String("off".into()))]
-                >
-                    <h1 class="text-2xl mb-12">"Редактирование пользователя"</h1>
-                    <input type="hidden" name="id" value=id.to_string()/>
-                    {form_content}
-                    <Show when=has_update_error>
-                        {move || {
-                            let err = format!("Ошибка: {}", update_value().unwrap().unwrap_err());
-                            view! {<p class="text-pink-600 pb-2">{err}</p>}
-                        }}
-                    </Show>
-                    <button type="submit" class="w-full mb-4 text-xl p-4 border border-solid border-slate-500 rounded">
-                        "Сохранить"
-                    </button>
-                </ActionForm>
-            }.into_view()
-        }
-        None => {
-            view! {
-                <ActionForm action=create_user
-                    class="p-8 m-8 bg-slate-200 dark:bg-slate-800 rounded-lg"
-                    attributes=vec![("autocomplete", Attribute::String("off".into()))]
-                >
-                    <h1 class="text-2xl mb-12">"Добавление нового пользователя"</h1>
-                    {form_content}
-                    <Show when=has_create_error>
-                        {move || {
-                            let err = format!("Ошибка: {}", create_value().unwrap().unwrap_err());
-                            view! {<p class="text-pink-600 pb-2">{err}</p>}
-                        }}
-                    </Show>
-                    <button type="submit" class="w-full mb-4 text-xl p-4 border border-solid border-slate-500 rounded">
-                        "Добавить"
-                    </button>
-                </ActionForm>
-            }.into_view()
-        }
-    }})
+    view! {
+        <Transition fallback=Loading>
+        {move || params.with(|params| { match params.as_ref().map(|p| p.id).ok().flatten() {
+            Some(id) => {
+                view! {
+                    <ActionForm action=update_user
+                        class="p-8 m-8 bg-slate-200 dark:bg-slate-800 rounded-lg"
+                        attributes=vec![("autocomplete", Attribute::String("off".into()))]
+                    >
+                        <h1 class="text-2xl mb-12">"Редактирование пользователя"</h1>
+                        <input type="hidden" name="id" value=id.to_string()/>
+                        {form_content}
+                        <Show when=has_update_error>
+                            {move || {
+                                let err = format!("Ошибка: {}", update_value().unwrap().unwrap_err());
+                                view! {<p class="text-pink-600 pb-2">{err}</p>}
+                            }}
+                        </Show>
+                        <button type="submit" class="w-full mb-4 text-xl p-4 border border-solid border-slate-500 rounded">
+                            "Сохранить"
+                        </button>
+                    </ActionForm>
+                }.into_view()
+            }
+            None => {
+                view! {
+                    <ActionForm action=create_user
+                        class="p-8 m-8 bg-slate-200 dark:bg-slate-800 rounded-lg"
+                        attributes=vec![("autocomplete", Attribute::String("off".into()))]
+                    >
+                        <h1 class="text-2xl mb-12">"Добавление нового пользователя"</h1>
+                        {form_content}
+                        <Show when=has_create_error>
+                            {move || {
+                                let err = format!("Ошибка: {}", create_value().unwrap().unwrap_err());
+                                view! {<p class="text-pink-600 pb-2">{err}</p>}
+                            }}
+                        </Show>
+                        <button type="submit" class="w-full mb-4 text-xl p-4 border border-solid border-slate-500 rounded">
+                            "Добавить"
+                        </button>
+                    </ActionForm>
+                }.into_view()
+            }
+        }})}
+    </Transition>
+    }
 }
