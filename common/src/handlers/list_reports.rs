@@ -20,7 +20,7 @@ pub async fn list_reports(
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        let user_id = if user.has(VIEW_OWNED, &s_pool.as_ref()).await {
+        let user_id_filter = if user.has(VIEW_OWNED, &s_pool.as_ref()).await {
             if let Some(owner_id) = owner_id.as_ref() {
                 if *owner_id != user.id {
                     return Err(ServerFnError::ServerError(
@@ -28,18 +28,18 @@ pub async fn list_reports(
                             .to_string(),
                     ));
                 } else {
-                    *owner_id
+                    Some(*owner_id)
                 }
             } else {
-                user.id
+                Some(user.id)
             }
         } else if user.has(VIEW_ALL, &s_pool.as_ref()).await {
             match owner_id {
-                Some(id) => id,
-                None => user.id,
+                Some(id) => Some(id),
+                None => None,
             }
         } else {
-            user.id
+            Some(user.id)
         };
 
         let pool = d_pool()?;
@@ -49,14 +49,20 @@ pub async fn list_reports(
 
         let entries_w_users = conn
             .interact(move |conn| {
-                entries_dsl::entries
+                let query = entries_dsl::entries
                     .inner_join(users_tabel)
                     .select((models::Entry::as_select(), models::User::as_select()))
-                    .filter(entries_dsl::by_user_id.eq(user_id))
                     .filter(entries_dsl::date.ge(min_date))
                     .filter(entries_dsl::date.le(max_date))
-                    .order(entries_dsl::date.asc())
-                    .load::<(models::Entry, models::User)>(conn)
+                    .order(entries_dsl::date.asc());
+
+                if let Some(user_id) = user_id_filter {
+                    query
+                        .filter(entries_dsl::by_user_id.eq(user_id))
+                        .load::<(models::Entry, models::User)>(conn)
+                } else {
+                    query.load::<(models::Entry, models::User)>(conn)
+                }
             })
             .await??;
 

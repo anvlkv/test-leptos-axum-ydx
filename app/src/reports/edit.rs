@@ -114,7 +114,10 @@ pub fn EditReport() -> impl IntoView {
                     step="0.01"
                     placeholder="Выручка"
                     name="revenue"
-                    prop:value=move || Moneys::from(report_data().unwrap_or_default().revenue).to_string()
+                    prop:value={move || {
+                        let f_val:f64 = Moneys::from(report_data().unwrap_or_default().revenue).into();
+                        f_val
+                    }}
                     class="w-full text-xl rounded p-4 !bg-transparent !text-inherit dark:!text-inherit border border-slate-500"/>
                 <span class="z-10 ml-3 px-1 mr-auto -mb-3 bg-slate-200 dark:bg-slate-800 inline-block">"Выручка, ₽:"</span>
             </label>

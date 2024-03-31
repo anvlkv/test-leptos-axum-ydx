@@ -29,7 +29,7 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<common::handlers::Login>();
     let logout = create_server_action::<common::handlers::Logout>();
 
-    let user = create_blocking_resource(
+    let user = create_resource(
         move || (login.version().get(), logout.version().get()),
         move |_| common::user::get_user(),
     );

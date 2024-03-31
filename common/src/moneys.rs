@@ -10,9 +10,9 @@ pub struct Moneys(pub i64);
 
 impl Display for Moneys {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let units: f64 = (*self).into();
+        use rusty_money::{iso, Money};
 
-        write!(f, "{:.2}", units)
+        write!(f, "{}", Money::from_minor(self.0, iso::RUB))
     }
 }
 

@@ -4,14 +4,22 @@ use common::{
     IdType,
 };
 use leptos::*;
+use leptos_router::{use_query, Params};
 
 use crate::{
     calendar::Calendar, dropdown::Dropdown, loading::Loading, reports::ReportsList,
     users::user_name_short,
 };
 
+#[derive(Params, PartialEq)]
+struct ReportQuery {
+    user_id: IdType,
+}
+
 #[component]
 pub fn ReportsViewer() -> impl IntoView {
+    let params = use_query::<ReportQuery>();
+
     let list_users = create_server_action::<common::handlers::ListUsers>();
 
     let app_user = use_context::<Signal<User>>().unwrap();
@@ -27,6 +35,8 @@ pub fn ReportsViewer() -> impl IntoView {
     create_effect(move |_| {
         if !admin_permissions_guard() {
             rw_view_user.set(Some(app_user().id))
+        } else if let Some(id) = params.with(|params| params.as_ref().map(|p| p.user_id).ok()) {
+            rw_view_user.set(Some(id))
         } else if let Some(user) = users
             .get()
             .map(|r| r.ok().map(|d| d.first().cloned()))
