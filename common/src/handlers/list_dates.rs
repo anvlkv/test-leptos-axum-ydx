@@ -1,7 +1,9 @@
 use leptos::*;
 
 #[server(ListDates, "/api", "GetJson")]
-pub async fn list_dates() -> Result<Vec<(i32, Vec<u32>)>, ServerFnError> {
+pub async fn list_dates(
+    by_user_id: Option<crate::IdType>,
+) -> Result<Vec<(i32, Vec<u32>)>, ServerFnError> {
     use std::collections::BTreeMap;
 
     use axum_session_auth::HasPermission;
@@ -34,7 +36,13 @@ pub async fn list_dates() -> Result<Vec<(i32, Vec<u32>)>, ServerFnError> {
                     .order(entries_dsl::date.asc());
 
                 if can_view_others {
-                    query.load::<models::Entry>(conn)
+                    if let Some(id) = by_user_id {
+                        query
+                            .filter(entries_dsl::by_user_id.eq(id))
+                            .load::<models::Entry>(conn)
+                    } else {
+                        query.load::<models::Entry>(conn)
+                    }
                 } else if can_view_owned {
                     query
                         .filter(entries_dsl::by_user_id.eq(user_id))

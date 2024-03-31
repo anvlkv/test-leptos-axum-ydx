@@ -1,5 +1,6 @@
 mod calendar;
 mod dashboard;
+mod dropdown;
 mod home;
 mod loading;
 mod login;
@@ -9,6 +10,7 @@ mod users;
 
 pub mod error_template;
 
+use common::perms::{MANAGE_USERS, VIEW_ALL};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -17,7 +19,7 @@ use dashboard::Dashboard;
 use error_template::{AppError, ErrorTemplate};
 use home::HomePage;
 use login::Login;
-use reports::{EditReport, Reports};
+use reports::{EditReport, ReportsViewer};
 use users::{EditUser, Users};
 
 #[component]
@@ -27,13 +29,13 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<common::handlers::Login>();
     let logout = create_server_action::<common::handlers::Logout>();
 
-    let user = create_resource(
+    let user = create_blocking_resource(
         move || (login.version().get(), logout.version().get()),
         move |_| common::user::get_user(),
     );
 
     let u_signal = Signal::derive(move || {
-        user()
+        user.get()
             .map(|s| s.ok().flatten())
             .flatten()
             .unwrap_or_default()
@@ -42,10 +44,15 @@ pub fn App() -> impl IntoView {
     provide_context(u_signal.clone());
 
     let auth_guard = move || {
-        user()
+        user.get()
             .map(|s| s.map(|u| u.is_some()).unwrap_or_default())
             .unwrap_or(true)
     };
+
+    let manager_permissions_guard =
+        Signal::derive(move || u_signal().permissions.contains(VIEW_ALL));
+    let admin_permissions_guard =
+        Signal::derive(move || u_signal().permissions.contains(MANAGE_USERS));
 
     view! {
         <Html lang="ru"/>
@@ -62,7 +69,7 @@ pub fn App() -> impl IntoView {
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
             <main class="bg-slate-100 dark:bg-slate-900 text-gray-950 dark:text-gray-100 w-screen h-screen overflow-hidden flex flex-wrap">
-                <Suspense fallback=loading::Loading >
+                <Suspense fallback=loading::Loading>
                     <Routes>
                         <Route path="/login" view=move || view!{ <Login action=login/> }/>
                         <ProtectedRoute
@@ -71,7 +78,7 @@ pub fn App() -> impl IntoView {
                             redirect_path="/login"
                             view=move || view!{ <HomePage user=u_signal /> }>
                                 <Route path="" view=Dashboard/>
-                                <Route path="reports" view=Reports/>
+                                <Route path="reports" view=ReportsViewer ssr=SsrMode::PartiallyBlocked/>
                                 <Route path="reports/new-report" view=EditReport/>
                                 <Route path="reports/:id" view=EditReport/>
                                 <Route path="users" view=Users/>

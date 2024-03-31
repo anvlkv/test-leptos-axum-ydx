@@ -2,7 +2,7 @@ use common::{perms::VIEW_ALL, user};
 use leptos::*;
 use leptos_router::{Outlet, A};
 
-use crate::logout::Logout;
+use crate::{error_template::ErrorTemplate, logout::Logout};
 
 #[component]
 pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
@@ -64,7 +64,11 @@ pub fn HomePage(user: Signal<user::User>) -> impl IntoView {
                 </nav>
             </aside>
             <section class="md:col-span-2 lg:col-span-4 row-span-2 overflow-y-auto">
-                <Outlet/>
+                <ErrorBoundary fallback=|errors| {
+                    view! { <ErrorTemplate errors/> }.into_view()
+                }>
+                    <Outlet/>
+                </ErrorBoundary>
             </section>
         </div>
     }

@@ -70,10 +70,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route(
             "/api/*fn_name",
-            get(server_fn_handler)
-                .post(server_fn_handler)
-                .patch(server_fn_handler)
-                .delete(server_fn_handler),
+            get(server_fn_handler).post(server_fn_handler),
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
@@ -153,8 +150,9 @@ async fn leptos_routes_handler(
     let handler = leptos_axum::render_app_to_stream_with_context(
         app_state.leptos_options.clone(),
         move || {
-            provide_context(app_state.d_pool.clone());
             provide_context(auth_session.clone());
+            provide_context(app_state.d_pool.clone());
+            provide_context(app_state.s_pool.clone());
         },
         App,
     );
