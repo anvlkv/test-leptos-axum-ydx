@@ -1,4 +1,5 @@
-use common::{handlers::ListReports, IdType};
+use chrono::{Datelike, Utc};
+use common::{handlers::ListReports, moneys::Moneys, perms::EDIT_OWNED, user::User, IdType};
 use leptos::*;
 use leptos_router::A;
 
@@ -17,6 +18,12 @@ pub fn ReportsList(
         move |(_, year, month, user_id)| common::handlers::list_reports(year, month, user_id),
     );
 
+    let app_user = use_context::<Signal<User>>().unwrap();
+    let manager_permissions_guard =
+        Signal::derive(move || app_user().permissions.contains(EDIT_OWNED));
+
+    let now_month = Signal::derive(|| Utc::now().month());
+
     view! {
         <Suspense fallback=Loading>
             {move || match reports.get() {
@@ -28,9 +35,11 @@ pub fn ReportsList(
                                         <th class="p-2 pl-8">{"Дата"}</th>
                                         <th class="p-2">{"Адрес"}</th>
                                         <th class="p-2">{"Выручка"}</th>
-                                        <th class="p-2 pr-8 text-right">
-                                            <i class="fa-solid fa-ellipsis-vertical"></i>
-                                        </th>
+                                        <Show when=manager_permissions_guard>
+                                            <th class="p-2 pr-8 text-right">
+                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                            </th>
+                                        </Show>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -38,14 +47,16 @@ pub fn ReportsList(
                                         <tr class="border-solid border-b border-slate-500">
                                             <td class="p-2 pl-8">{report.date.format("%d.%m.%Y").to_string()}</td>
                                             <td class="p-2">{report.address}</td>
-                                            <td class="p-2">{format!("{:.2}₽", report.revenue.0 as f64 / 100.0)}</td>
-                                            <td class="p-2 pr-6 text-right">
-                                                <Show when=|| true>
-                                                    <A href=format!("{}",report.id) class="px-2 py-1 border border-solid border-slate-500 rounded-sm">
-                                                        <i title="Редактировать" class="fa-solid fa-pen-to-square"></i>
-                                                    </A>
-                                                </Show>
-                                            </td>
+                                            <td class="p-2">{format!("{}₽", Moneys::from(report.revenue))}</td>
+                                            <Show when=manager_permissions_guard>
+                                                <td class="p-2 pr-6 text-right">
+                                                    <Show when=move || report.date.month() == now_month()>
+                                                        <A href=format!("{}",report.id) class="px-2 py-1 border border-solid border-slate-500 rounded-sm">
+                                                            <i title="Редактировать" class="fa-solid fa-pen-to-square"></i>
+                                                        </A>
+                                                    </Show>
+                                                </td>
+                                            </Show>
                                         </tr>
                                     </For>
                                 </tbody>

@@ -4,7 +4,7 @@ use diesel::data_types::Cents;
 use diesel::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::IdType;
+use crate::{moneys::Moneys, IdType};
 
 #[derive(Deserialize, Serialize, Clone)]
 #[cfg_attr(
@@ -28,9 +28,7 @@ pub struct Entry {
 pub struct EntryWithUser {
     pub id: IdType,
     pub address: String,
-    #[serde(serialize_with = "cents_ser")]
-    #[serde(deserialize_with = "cents_de")]
-    pub revenue: Cents,
+    pub revenue: Moneys,
     pub date: NaiveDate,
     pub user: crate::user::User,
 }
@@ -44,7 +42,7 @@ pub mod ssr {
             Self {
                 id: entry.id,
                 address: entry.address,
-                revenue: entry.revenue,
+                revenue: entry.revenue.into(),
                 date: entry.date,
                 user: user.into_user_with_password(None).0,
             }

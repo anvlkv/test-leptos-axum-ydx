@@ -3,21 +3,25 @@ use leptos::*;
 #[server(UpdateReport, "/api")]
 pub async fn update_report(
     id: crate::IdType,
-    revenue: i64,
+    revenue: String,
     address: String,
     date: chrono::NaiveDate,
 ) -> Result<(), ServerFnError> {
+    use std::str::FromStr;
+
     use axum_session_auth::HasPermission;
     use chrono::{Datelike, NaiveDate, Utc};
     use diesel::data_types::Cents;
     use diesel::{update, ExpressionMethods, RunQueryDsl};
 
+    use crate::moneys::Moneys;
     use crate::schema::entries::dsl as entries_dsl;
     use crate::{
         ctx::{auth, d_pool, pool},
         perms::EDIT_OWNED,
     };
 
+    let revenue = Moneys::from_str(revenue.as_str())?;
     let pool = pool().ok();
     let auth = auth()?;
 
@@ -44,7 +48,7 @@ pub async fn update_report(
                         .filter(entries_dsl::id.eq(id))
                         .filter(entries_dsl::date.ge(min_date))
                         .set((
-                            entries_dsl::revenue.eq(Cents(revenue)),
+                            entries_dsl::revenue.eq(Cents(revenue.0)),
                             entries_dsl::address.eq(address),
                         ))
                         .execute(conn)

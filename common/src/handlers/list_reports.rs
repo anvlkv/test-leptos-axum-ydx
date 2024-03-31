@@ -5,11 +5,11 @@ pub async fn list_reports(
     year: i32,
     month: u32,
     owner_id: Option<crate::IdType>,
-) -> Result<Vec<crate::models::Entry>, ServerFnError> {
+) -> Result<Vec<crate::models::EntryWithUser>, ServerFnError> {
     use axum_session_auth::HasPermission;
     use diesel::prelude::*;
 
-    use crate::schema::entries::dsl as entries_dsl;
+    use crate::schema::{entries::dsl as entries_dsl, users::table as users_tabel};
     use crate::{
         ctx::{auth, d_pool, pool},
         models::{self, entry::month_range},
@@ -50,21 +50,17 @@ pub async fn list_reports(
         let entries_w_users = conn
             .interact(move |conn| {
                 entries_dsl::entries
-                    // .inner_join(users_tabel)
-                    // .select((models::Entry::as_select(), models::User::as_select()))
-                    .select(models::Entry::as_select())
+                    .inner_join(users_tabel)
+                    .select((models::Entry::as_select(), models::User::as_select()))
                     .filter(entries_dsl::by_user_id.eq(user_id))
                     .filter(entries_dsl::date.ge(min_date))
                     .filter(entries_dsl::date.le(max_date))
                     .order(entries_dsl::date.asc())
-                    // .load::<(models::Entry, models::User)>(conn)
-                    .load::<models::Entry>(conn)
+                    .load::<(models::Entry, models::User)>(conn)
             })
             .await??;
 
-        // return Ok(vec![]);
-        // return Ok(entries_w_users.into_iter().map(|d| d.into()).collect());
-        return Ok(entries_w_users);
+        return Ok(entries_w_users.into_iter().map(|d| d.into()).collect());
     }
 
     Err(ServerFnError::ServerError(

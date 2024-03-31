@@ -1,4 +1,8 @@
-use common::{perms::VIEW_ALL, user::User, IdType};
+use common::{
+    perms::{EDIT_OWNED, VIEW_ALL, VIEW_OWNED},
+    user::User,
+    IdType,
+};
 use leptos::*;
 
 use crate::{
@@ -10,15 +14,20 @@ use crate::{
 pub fn ReportsViewer() -> impl IntoView {
     let list_users = create_server_action::<common::handlers::ListUsers>();
 
+    let app_user = use_context::<Signal<User>>().unwrap();
+    let admin_permissions_guard = Signal::derive(move || app_user().permissions.contains(VIEW_ALL));
+
     let users = create_local_resource(
-        move || list_users.version().get(),
-        move |_| common::handlers::list_users(true),
+        move || (list_users.version().get(), admin_permissions_guard()),
+        move |(_, all)| common::handlers::list_users(all),
     );
 
     let rw_view_user = create_rw_signal(None);
 
     create_effect(move |_| {
-        if let Some(user) = users
+        if !admin_permissions_guard() {
+            rw_view_user.set(Some(app_user().id))
+        } else if let Some(user) = users
             .get()
             .map(|r| r.ok().map(|d| d.first().cloned()))
             .flatten()
@@ -30,27 +39,28 @@ pub fn ReportsViewer() -> impl IntoView {
 
     view! {
         <Suspense fallback=Loading>
-            <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
-                {
-                    move || {
-                        let options = Signal::derive(move || {
-                            let data = users().map(|u| u.ok()).flatten().unwrap_or_default();
+            <Show when={move|| admin_permissions_guard()}>
+                <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
+                    {
+                        move || {
+                            let options = Signal::derive(move || {
+                                let data = users().map(|u| u.ok()).flatten().unwrap_or_default();
 
-                            data.into_iter()
-                                .map(|u| (u.id, user_name_short(&u)))
-                                .collect::<Vec<_>>()
-                        });
+                                data.into_iter()
+                                    .map(|u| (u.id, user_name_short(&u)))
+                                    .collect::<Vec<_>>()
+                            });
 
-
-                        view!{<Dropdown
-                            name="user"
-                            label_text="Отчеты менеджера:"
-                            options={options}
-                            current_option=rw_view_user
-                        />}
+                            view!{<Dropdown
+                                name="user"
+                                label_text="Отчеты менеджера:"
+                                options={options}
+                                current_option=rw_view_user
+                            />}
+                        }
                     }
-                }
-            </div>
+                </div>
+            </Show>
             <ReportUserDates view_user=rw_view_user/>
         </Suspense>
     }

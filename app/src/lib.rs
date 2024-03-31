@@ -49,11 +49,6 @@ pub fn App() -> impl IntoView {
             .unwrap_or(true)
     };
 
-    let manager_permissions_guard =
-        Signal::derive(move || u_signal().permissions.contains(VIEW_ALL));
-    let admin_permissions_guard =
-        Signal::derive(move || u_signal().permissions.contains(MANAGE_USERS));
-
     view! {
         <Html lang="ru"/>
 
