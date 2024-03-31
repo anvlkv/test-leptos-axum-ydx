@@ -19,7 +19,7 @@ pub fn ReportsSummary(#[prop(into)] reports: Signal<Vec<models::EntryWithUser>>)
             },
         );
 
-        let mut agg = grouped.values().into_iter().cloned().collect::<Vec<_>>();
+        let mut agg = grouped.values().cloned().collect::<Vec<_>>();
 
         agg.sort_by(|(a_user, _), (b_user, _)| {
             a_user
@@ -43,7 +43,7 @@ pub fn ReportsSummary(#[prop(into)] reports: Signal<Vec<models::EntryWithUser>>)
                 </tr>
             </thead>
             <tbody>
-                <For each=move || summary() key=|(u, _)| u.id let:entry>
+                <For each=summary key=|(u, _)| u.id let:entry>
                     <tr class="border-solid border-b border-slate-500">
                         <td class="p-2 pl-8">
                             <A class="text-indigo-500" href={format!("/reports?user_id={}", entry.0.id)}>{user_name_short(&entry.0)}</A>

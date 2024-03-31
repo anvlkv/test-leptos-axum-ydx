@@ -36,11 +36,10 @@ pub fn Dashboard() -> impl IntoView {
     create_effect(move |_| {
         if let Some((y, m)) = dates
             .get()
-            .map(|r| {
+            .and_then(|r| {
                 r.ok()
                     .map(|d| d.last().and_then(|(y, mm)| mm.last().map(|m| (*y, *m))))
             })
-            .flatten()
             .flatten()
         {
             rw_year.set(Some(y));
@@ -61,7 +60,7 @@ pub fn Dashboard() -> impl IntoView {
     );
 
     let all_reports =
-        Signal::derive(move || reports.get().map(|r| r.ok()).flatten().unwrap_or_default());
+        Signal::derive(move || reports.get().and_then(|r| r.ok()).unwrap_or_default());
 
     let month_revenue = Signal::derive(move || {
         let all = all_reports();
@@ -85,7 +84,7 @@ pub fn Dashboard() -> impl IntoView {
         <Suspense fallback=Loading>
             <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
                 {move || {
-                    let options = Signal::derive(move || dates().map(|r| r.ok()).flatten().unwrap_or_default());
+                    let options = Signal::derive(move || dates().and_then(|r| r.ok()).unwrap_or_default());
 
                     view!{
                         <Calendar
@@ -123,7 +122,7 @@ pub fn Dashboard() -> impl IntoView {
 
 fn plural(number: usize, word: &str) -> String {
     match number.to_string().as_str() {
-        n if n.ends_with("0")
+        n if n.ends_with('0')
             || n.ends_with("11")
             || n.ends_with("12")
             || n.ends_with("13")
@@ -136,8 +135,8 @@ fn plural(number: usize, word: &str) -> String {
         {
             format!("{word}ов")
         }
-        n if n.ends_with("1") => word.to_string(),
-        n if n.ends_with("2") || n.ends_with("3") || n.ends_with("4") => format!("{word}a"),
+        n if n.ends_with('1') => word.to_string(),
+        n if n.ends_with('2') || n.ends_with('3') || n.ends_with('4') => format!("{word}a"),
         _ => format!("{word}ов"),
     }
 }

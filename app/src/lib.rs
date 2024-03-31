@@ -42,11 +42,10 @@ pub fn App() -> impl IntoView {
     let protected_view = move || {
         let u_signal = Signal::derive(move || {
             user.get()
-                .map(|s| s.ok().flatten())
-                .flatten()
+                .and_then(|s| s.ok().flatten())
                 .unwrap_or_default()
         });
-        provide_context(u_signal.clone());
+        provide_context(u_signal);
         view! {
             <Suspense>
                 <HomePage/>

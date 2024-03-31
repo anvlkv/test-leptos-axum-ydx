@@ -59,7 +59,7 @@ pub async fn list_dates(
                 let year = entry.date.year();
                 let month = entry.date.month();
 
-                let map_entry = acc.entry(year).or_insert(vec![]);
+                let map_entry = acc.entry(year).or_default();
 
                 if !map_entry.contains(&month) {
                     map_entry.push(month)

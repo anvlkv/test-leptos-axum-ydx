@@ -24,23 +24,20 @@ pub async fn update_user(
     if let Some(user) = auth.current_user.as_ref() {
         let can_manage_users = user.has(MANAGE_USERS, &pool.as_ref()).await;
         if can_manage_users || user.id == id {
-            // use crate::schema::permissions::dsl as perm_dsl;
-
             let pool = d_pool()?;
             let conn = pool.get().await?;
 
             if let Some(password) = password {
                 let pwd = hash(password, DEFAULT_COST)?;
-                _ = conn
-                    .interact(move |conn| {
-                        update(users_dsl::users)
-                            .filter(users_dsl::id.eq(id))
-                            .set(users_dsl::password.eq(pwd))
-                            .execute(conn)?;
+                conn.interact(move |conn| {
+                    update(users_dsl::users)
+                        .filter(users_dsl::id.eq(id))
+                        .set(users_dsl::password.eq(pwd))
+                        .execute(conn)?;
 
-                        Result::<(), ServerFnError>::Ok(())
-                    })
-                    .await??;
+                    Result::<(), ServerFnError>::Ok(())
+                })
+                .await??;
             }
 
             _ = conn

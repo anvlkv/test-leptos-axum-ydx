@@ -31,9 +31,9 @@ impl FromStr for Moneys {
 
         while let Some(num) = it.next() {
             if it.peek().is_some() || whole.is_empty() {
-                whole.extend(num.chars());
+                whole.push_str(num);
             } else {
-                decimal.extend(num.chars());
+                decimal.push_str(num);
             }
         }
 
@@ -51,8 +51,8 @@ impl From<Cents> for Moneys {
     }
 }
 
-impl Into<f64> for Moneys {
-    fn into(self) -> f64 {
-        self.0 as f64 / CENTS
+impl From<Moneys> for f64 {
+    fn from(val: Moneys) -> Self {
+        val.0 as f64 / CENTS
     }
 }

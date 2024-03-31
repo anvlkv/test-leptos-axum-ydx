@@ -1,6 +1,6 @@
 use chrono::{Datelike, Utc};
 use common::{
-    handlers::ListReports, models::EntryWithUser, moneys::Moneys, perms::EDIT_OWNED, user::User,
+    handlers::ListReports, models::EntryWithUser, perms::EDIT_OWNED, user::User,
     IdType,
 };
 use leptos::*;
@@ -71,11 +71,11 @@ pub fn ReportsTable(#[prop(into)] reports: Signal<Vec<EntryWithUser>>) -> impl I
                 </tr>
             </thead>
             <tbody>
-                <For each=move || reports() key=|u| u.id let:report>
+                <For each=reports key=|u| u.id let:report>
                     <tr class="border-solid border-b border-slate-500">
                         <td class="p-2 pl-8">{report.date.format("%d.%m.%Y").to_string()}</td>
                         <td class="p-2">{report.address}</td>
-                        <td class="p-2">{format!("{}", Moneys::from(report.revenue))}</td>
+                        <td class="p-2">{format!("{}", report.revenue)}</td>
                         <Show when=manager_permissions_guard>
                             <td class="p-2 pr-6 text-right">
                                 <Show when=move || report.date.month() == now_month()>

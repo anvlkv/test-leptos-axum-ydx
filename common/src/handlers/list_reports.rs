@@ -34,10 +34,7 @@ pub async fn list_reports(
                 Some(user.id)
             }
         } else if user.has(VIEW_ALL, &s_pool.as_ref()).await {
-            match owner_id {
-                Some(id) => Some(id),
-                None => None,
-            }
+            owner_id
         } else {
             Some(user.id)
         };

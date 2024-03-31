@@ -35,8 +35,7 @@ pub fn ReportsViewer() -> impl IntoView {
             rw_view_user.set(Some(id))
         } else if let Some(user) = users
             .get()
-            .map(|r| r.ok().map(|d| d.first().cloned()))
-            .flatten()
+            .and_then(|r| r.ok().map(|d| d.first().cloned()))
             .flatten()
         {
             rw_view_user.set(Some(user.id))
@@ -45,12 +44,12 @@ pub fn ReportsViewer() -> impl IntoView {
 
     view! {
         <Suspense fallback=Loading>
-            <Show when={move|| admin_permissions_guard()}>
+            <Show when={admin_permissions_guard}>
                 <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
                     {
                         move || {
                             let options = Signal::derive(move || {
-                                let data = users().map(|u| u.ok()).flatten().unwrap_or_default();
+                                let data = users().and_then(|u| u.ok()).unwrap_or_default();
 
                                 data.into_iter()
                                     .map(|u| (u.id, user_name_short(&u)))
@@ -87,11 +86,10 @@ fn ReportUserDates(#[prop(into)] view_user: Signal<Option<IdType>>) -> impl Into
     create_effect(move |_| {
         if let Some((y, m)) = user_dates
             .get()
-            .map(|r| {
+            .and_then(|r| {
                 r.ok()
                     .map(|d| d.last().and_then(|(y, mm)| mm.last().map(|m| (*y, *m))))
             })
-            .flatten()
             .flatten()
         {
             rw_year.set(Some(y));
@@ -103,7 +101,7 @@ fn ReportUserDates(#[prop(into)] view_user: Signal<Option<IdType>>) -> impl Into
         <Suspense fallback=Loading>
             <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
                 {move || {
-                    let options = Signal::derive(move || user_dates().map(|r| r.ok()).flatten().unwrap_or_default());
+                    let options = Signal::derive(move || user_dates().and_then(|r| r.ok()).unwrap_or_default());
 
                     view!{
                         <Calendar

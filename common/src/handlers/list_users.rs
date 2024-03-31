@@ -19,7 +19,7 @@ pub async fn list_users(managers_only: bool) -> Result<Vec<crate::user::User>, S
             let pool = d_pool()?;
             let conn = pool.get().await?;
 
-            let current_user_id = user.id.clone();
+            let current_user_id = user.id;
             let result_users = conn
                 .interact(move |conn| {
                     use crate::schema::users::dsl::*;

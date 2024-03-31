@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
     let manager = Manager::new(config.db.url.clone(), deadpool_diesel::Runtime::Tokio1);
     let d_pool = Pool::builder(manager).build().unwrap();
 
-    initial_setup(&d_pool, &config).await;
+    initial_setup(&d_pool, config).await;
 
     let s_pool = PgPoolOptions::new()
         .max_connections(5)
