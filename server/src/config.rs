@@ -22,10 +22,7 @@ impl DatabaseConfig {
             let host = env::var("PG_HOST").expect("PG_HOST must be set");
             let port = env::var("PG_PORT").unwrap_or("6432".to_string());
 
-            format!(
-                "postgres://{user}:{password}@{host}:{port}
-            /{db_name}"
-            )
+            format!("postgres://{user}:{password}@{host}:{port}/{db_name}")
         };
 
         Self { url, name: db_name }
@@ -54,11 +51,9 @@ async fn init_config() -> Config {
     // The file would need to be included with the executable when moved to deployment
     let conf = get_configuration(None).await.unwrap();
 
-    let database_config = DatabaseConfig::new();
-
     Config {
         leptos: conf,
-        db: database_config,
+        db: DatabaseConfig::new(),
         default_admin_user: env::var("ADMIN_USERNAME").expect("ADMIN_USERNAME must be set"),
         default_admin_password: env::var("ADMIN_PWD").expect("ADMIN_PWD must be set"),
         create_fixtures: env::var("FIXTURES").map(|f| f == "true").unwrap_or(false),

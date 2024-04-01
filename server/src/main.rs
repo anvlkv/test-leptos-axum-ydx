@@ -20,6 +20,7 @@ use fileserv::file_and_error_handler;
 use leptos::*;
 use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use tower_http::trace::{self, TraceLayer};
 
 use crate::config::config;
 use crate::fixture::make_fixture;
@@ -33,17 +34,26 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .init();
 
     let config = config().await;
 
     let manager = Manager::new(config.db.url.clone(), deadpool_diesel::Runtime::Tokio1);
-    let d_pool = Pool::builder(manager).build().unwrap();
+    let d_pool = Pool::builder(manager)
+        .max_size(50)
+        .recycle_timeout(Some(core::time::Duration::new(5, 0)))
+        .runtime(deadpool_diesel::Runtime::Tokio1)
+        .build()
+        .unwrap();
 
     initial_setup(&d_pool, config).await;
 
     let s_pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_lifetime(Some(core::time::Duration::new(5, 0)))
+        .max_connections(50)
         .connect(config.db.url.as_str())
         .await?;
 
@@ -83,6 +93,11 @@ async fn main() -> anyhow::Result<()> {
             .with_config(auth_config),
         )
         .layer(SessionLayer::new(session_store))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(trace::DefaultMakeSpan::new().level(tracing::Level::INFO))
+                .on_response(trace::DefaultOnResponse::new().level(tracing::Level::INFO)),
+        )
         .with_state(state);
 
     log::info!("listening on http://{}", &addr);
