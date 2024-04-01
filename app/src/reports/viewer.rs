@@ -43,7 +43,7 @@ pub fn ReportsViewer() -> impl IntoView {
     });
 
     view! {
-        <Suspense fallback=Loading>
+        <Transition fallback=Loading>
             <Show when={admin_permissions_guard}>
                 <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
                     {
@@ -67,7 +67,7 @@ pub fn ReportsViewer() -> impl IntoView {
                 </div>
             </Show>
             <ReportUserDates view_user=rw_view_user/>
-        </Suspense>
+        </Transition>
     }
 }
 
@@ -98,7 +98,7 @@ fn ReportUserDates(#[prop(into)] view_user: Signal<Option<IdType>>) -> impl Into
     });
 
     view! {
-        <Suspense fallback=Loading>
+        <Transition fallback=Loading>
             <div class="w-full flex flex-col text-xl px-4 pt-8 pb-2 bg-slate-50 dark:bg-slate-700">
                 {move || {
                     let options = Signal::derive(move || user_dates().and_then(|r| r.ok()).unwrap_or_default());
@@ -119,6 +119,6 @@ fn ReportUserDates(#[prop(into)] view_user: Signal<Option<IdType>>) -> impl Into
                     <ReportsList year=year month=month user=view_user />
                 }
             }}
-        </Suspense>
+        </Transition>
     }
 }

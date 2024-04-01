@@ -1,8 +1,5 @@
 use chrono::{Datelike, Utc};
-use common::{
-    handlers::ListReports, models::EntryWithUser, perms::EDIT_OWNED, user::User,
-    IdType,
-};
+use common::{handlers::ListReports, models::EntryWithUser, perms::EDIT_OWNED, user::User, IdType};
 use leptos::*;
 use leptos_router::A;
 

@@ -53,7 +53,7 @@ pub async fn new_report(
                 })
                 .await??;
 
-            leptos_axum::redirect("/reports");
+            leptos_axum::redirect("/");
 
             return Ok(());
         }

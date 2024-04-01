@@ -23,7 +23,8 @@ pub async fn update_user(
 
     if let Some(user) = auth.current_user.as_ref() {
         let can_manage_users = user.has(MANAGE_USERS, &pool.as_ref()).await;
-        if can_manage_users || user.id == id {
+        let is_updating_self = user.id == id;
+        if can_manage_users || is_updating_self {
             let pool = d_pool()?;
             let conn = pool.get().await?;
 
@@ -74,7 +75,11 @@ pub async fn update_user(
                 })
                 .await?;
 
-            leptos_axum::redirect("/users");
+            if is_updating_self {
+                leptos_axum::redirect("/");
+            } else {
+                leptos_axum::redirect("/users");
+            }
 
             return Ok(());
         }

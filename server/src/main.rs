@@ -61,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
     let session_config = SessionConfig::default().with_table_name("sessions");
 
     let auth_config = AuthConfig::<IdType>::default()
-        .with_anonymous_user_id(Some(uuid::Uuid::nil()))
+        .with_anonymous_user_id(None)
         .with_max_age(chrono::Duration::try_days(2).unwrap())
         .with_session_id("public-stage.a.nvlkv.online");
 
