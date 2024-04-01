@@ -45,8 +45,8 @@ ENV RUST_LOG="info"
 ENV LEPTOS_SITE_ROOT="site"
 ENV APP_ENVIRONMENT="production"
 
-EXPOSE $PORT
+EXPOSE $VCAP_APP_PORT
 
 # -- NB: update binary name from "leptos_start" to match your app name in Cargo.toml --
 # Run the server
-CMD LEPTOS_SITE_ADDR=0.0.0.0:$PORT /app/server
+CMD LEPTOS_SITE_ADDR=0.0.0.0:$VCAP_APP_PORT /app/server

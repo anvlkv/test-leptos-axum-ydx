@@ -10,6 +10,28 @@ pub struct DatabaseConfig {
     pub name: String,
 }
 
+impl DatabaseConfig {
+    fn new() -> Self {
+        let db_name = env::var("DB_NAME").expect("DB_NAME must be set");
+
+        let url = if let Ok(url) = env::var("DATABASE_URL") {
+            url
+        } else {
+            let user = env::var("PG_LOGIN").expect("Database url or credentials must be set");
+            let password = env::var("PG_PWD").expect("Database url or credentials must be set");
+            let host = env::var("PG_HOST").expect("PG_HOST must be set");
+            let port = env::var("PG_PORT").unwrap_or("6432".to_string());
+
+            format!(
+                "postgres://{user}:{password}@{host}:{port}
+            /{db_name}"
+            )
+        };
+
+        Self { url, name: db_name }
+    }
+}
+
 #[derive(Debug)]
 pub struct Config {
     pub leptos: ConfFile,
@@ -32,10 +54,7 @@ async fn init_config() -> Config {
     // The file would need to be included with the executable when moved to deployment
     let conf = get_configuration(None).await.unwrap();
 
-    let database_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
-        name: env::var("DB_NAME").expect("DB_NAME must be set"),
-    };
+    let database_config = DatabaseConfig::new();
 
     Config {
         leptos: conf,
