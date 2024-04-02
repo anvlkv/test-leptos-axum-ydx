@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE entries\n                SET revenue = $1,\n                address = $2\n                WHERE by_user_id = $3 AND\n                id = $4 AND\n                date >= $5\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Money",
+        "Varchar",
+        "Uuid",
+        "Uuid",
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "23fdf10fb101b7bc3361030ec4cb1191131415e56cbdb653f183dc05438aa909"
+}
