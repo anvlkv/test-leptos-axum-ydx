@@ -1,6 +1,5 @@
 use std::{fmt::Display, num::ParseFloatError, str::FromStr};
 
-use diesel::data_types::Cents;
 use serde::{Deserialize, Serialize};
 
 const CENTS: f64 = 100.0;
@@ -45,8 +44,9 @@ impl FromStr for Moneys {
     }
 }
 
-impl From<Cents> for Moneys {
-    fn from(value: Cents) -> Self {
+#[cfg(feature = "ssr")]
+impl From<sqlx_postgres::types::PgMoney> for Moneys {
+    fn from(value: sqlx_postgres::types::PgMoney) -> Self {
         Self(value.0)
     }
 }

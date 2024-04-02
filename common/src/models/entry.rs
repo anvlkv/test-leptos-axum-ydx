@@ -1,27 +1,31 @@
 use chrono::{NaiveDate, Utc};
-use diesel::data_types::Cents;
-#[cfg(feature = "ssr")]
-use diesel::prelude::*;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::{moneys::Moneys, IdType};
 
 #[derive(Deserialize, Serialize, Clone)]
-#[cfg_attr(
-    feature = "ssr",
-    derive(Queryable, Selectable, Identifiable, Associations)
-)]
-#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::entries))]
-#[cfg_attr(feature = "ssr", diesel(belongs_to(crate::schema::users::table, foreign_key = by_user_id)))]
-#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct Entry {
     pub id: IdType,
     pub address: String,
-    #[serde(serialize_with = "cents_ser")]
-    #[serde(deserialize_with = "cents_de")]
-    pub revenue: Cents,
+    pub revenue: Moneys,
     pub date: NaiveDate,
     pub by_user_id: IdType,
+}
+
+#[cfg(feature = "ssr")]
+impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for Entry {
+    fn from_row(row: &'r sqlx::postgres::PgRow) -> Result<Self, sqlx::Error> {
+        use sqlx::Row;
+        let revenue: sqlx_postgres::types::PgMoney = row.try_get("revenue")?;
+
+        Ok(Self {
+            id: row.try_get("id")?,
+            address: row.try_get("address")?,
+            revenue: revenue.into(),
+            date: row.try_get("date")?,
+            by_user_id: row.try_get("by_user_id")?,
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -55,7 +59,7 @@ impl Default for Entry {
         Self {
             id: uuid::Uuid::nil(),
             address: Default::default(),
-            revenue: Cents(0),
+            revenue: Default::default(),
             date: Utc::now().date_naive(),
             by_user_id: Default::default(),
         }
@@ -69,18 +73,4 @@ pub fn month_range(year: i32, month: u32) -> (NaiveDate, NaiveDate) {
         .pred_opt()
         .unwrap_or_default();
     (min_date, max_date)
-}
-
-fn cents_de<'de, D>(deser: D) -> Result<Cents, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    Ok(Cents(i64::deserialize(deser)?))
-}
-
-fn cents_ser<S>(value: &Cents, ser: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    value.0.serialize(ser)
 }

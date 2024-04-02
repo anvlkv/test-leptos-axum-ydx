@@ -8,50 +8,41 @@ pub async fn list_dates(
 
     use axum_session_auth::HasPermission;
     use chrono::Datelike;
-    use diesel::prelude::*;
 
-    use crate::schema::entries::dsl as entries_dsl;
     use crate::{
-        ctx::{auth, d_pool, pool},
-        models,
+        ctx::{auth, pool},
         perms::{VIEW_ALL, VIEW_OWNED},
     };
 
-    let s_pool = pool().ok();
+    let pool = pool()?;
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
         let user_id = user.id;
 
-        let can_view_others = user.has(VIEW_ALL, &s_pool.as_ref()).await;
-        let can_view_owned = user.has(VIEW_OWNED, &s_pool.as_ref()).await;
+        let can_view_others = user.has(VIEW_ALL, &Some(&pool)).await;
+        let can_view_owned = user.has(VIEW_OWNED, &Some(&pool)).await;
 
-        let pool = d_pool()?;
-        let conn = pool.get().await?;
+        let user_id_filter = if can_view_others {
+            by_user_id
+        } else if can_view_owned {
+            Some(user_id)
+        } else {
+            return Err(ServerFnError::ServerError(
+                "Пользователь не авторизован для просмотра отчетов".to_string(),
+            ));
+        };
 
-        let entries: Vec<models::Entry> = conn
-            .interact(move |conn| {
-                let query = entries_dsl::entries
-                    .select(models::Entry::as_select())
-                    .order(entries_dsl::date.asc());
-
-                if can_view_others {
-                    if let Some(id) = by_user_id {
-                        query
-                            .filter(entries_dsl::by_user_id.eq(id))
-                            .load::<models::Entry>(conn)
-                    } else {
-                        query.load::<models::Entry>(conn)
-                    }
-                } else if can_view_owned {
-                    query
-                        .filter(entries_dsl::by_user_id.eq(user_id))
-                        .load::<models::Entry>(conn)
-                } else {
-                    Ok(vec![])
-                }
-            })
-            .await??;
+        let entries = sqlx::query!(
+            r#"
+            SELECT * FROM entries
+            WHERE ($1::UUID IS NULL) OR (entries.by_user_id = $1::UUID)
+            ORDER BY entries.date ASC
+            "#,
+            user_id_filter
+        )
+        .fetch_all(&pool)
+        .await?;
 
         let dates: Vec<(i32, Vec<u32>)> = entries
             .into_iter()
@@ -74,6 +65,6 @@ pub async fn list_dates(
     }
 
     Err(ServerFnError::ServerError(
-        "Пользователь не авторизован для добавления отчетов".to_string(),
+        "Пользователь не авторизован для просмотра отчетов".to_string(),
     ))
 }

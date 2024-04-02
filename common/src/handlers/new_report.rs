@@ -10,25 +10,20 @@ pub async fn new_report(
 
     use axum_session_auth::HasPermission;
     use chrono::{Datelike, NaiveDate, Utc};
-    use diesel::data_types::Cents;
-    use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
+    use sqlx_postgres::types::PgMoney;
 
     use crate::moneys::Moneys;
-    use crate::schema::entries::dsl as entries_dsl;
     use crate::{
-        ctx::{auth, d_pool, pool},
+        ctx::{auth, pool},
         perms::EDIT_OWNED,
     };
 
     let revenue = Moneys::from_str(revenue.as_str())?;
-    let pool = pool().ok();
+    let pool = pool()?;
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        if user.has(EDIT_OWNED, &pool.as_ref()).await {
-            let pool = d_pool()?;
-            let conn = pool.get().await?;
-
+        if user.has(EDIT_OWNED, &Some(&pool)).await {
             let user_id = user.id;
 
             let now = Utc::now().date_naive();
@@ -40,18 +35,18 @@ pub async fn new_report(
                 ));
             }
 
-            _ = conn
-                .interact(move |conn| {
-                    insert_into(entries_dsl::entries)
-                        .values((
-                            entries_dsl::date.eq(date),
-                            entries_dsl::revenue.eq(Cents(revenue.0)),
-                            entries_dsl::by_user_id.eq(user_id),
-                            entries_dsl::address.eq(address),
-                        ))
-                        .execute(conn)
-                })
-                .await??;
+            sqlx::query!(
+                r#"
+                INSERT INTO entries (date, revenue, by_user_id, address)
+                VALUES ($1, $2, $3, $4)
+                "#,
+                date,
+                PgMoney(revenue.0),
+                user_id,
+                address
+            )
+            .execute(&pool)
+            .await?;
 
             leptos_axum::redirect("/");
 

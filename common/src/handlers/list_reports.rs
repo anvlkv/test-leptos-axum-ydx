@@ -6,21 +6,18 @@ pub async fn list_reports(
     month: u32,
     owner_id: Option<crate::IdType>,
 ) -> Result<Vec<crate::models::EntryWithUser>, ServerFnError> {
-    use axum_session_auth::HasPermission;
-    use diesel::prelude::*;
-
-    use crate::schema::{entries::dsl as entries_dsl, users::table as users_tabel};
     use crate::{
-        ctx::{auth, d_pool, pool},
+        ctx::{auth, pool},
         models::{self, entry::month_range},
         perms::{VIEW_ALL, VIEW_OWNED},
     };
+    use axum_session_auth::HasPermission;
 
-    let s_pool = pool().ok();
+    let pool = pool()?;
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        let user_id_filter = if user.has(VIEW_OWNED, &s_pool.as_ref()).await {
+        let user_id_filter = if user.has(VIEW_OWNED, &Some(&pool)).await {
             if let Some(owner_id) = owner_id.as_ref() {
                 if *owner_id != user.id {
                     return Err(ServerFnError::ServerError(
@@ -33,37 +30,50 @@ pub async fn list_reports(
             } else {
                 Some(user.id)
             }
-        } else if user.has(VIEW_ALL, &s_pool.as_ref()).await {
+        } else if user.has(VIEW_ALL, &Some(&pool)).await {
             owner_id
         } else {
             Some(user.id)
         };
 
-        let pool = d_pool()?;
-        let conn = pool.get().await?;
-
         let (min_date, max_date) = month_range(year, month);
 
-        let entries_w_users = conn
-            .interact(move |conn| {
-                let query = entries_dsl::entries
-                    .inner_join(users_tabel)
-                    .select((models::Entry::as_select(), models::User::as_select()))
-                    .filter(entries_dsl::date.ge(min_date))
-                    .filter(entries_dsl::date.le(max_date))
-                    .order(entries_dsl::date.desc());
+        let records = sqlx::query!(
+            r#"
+            SELECT entries.address, entries.revenue, entries.date, entries.by_user_id, entries.id as entry_id, users.*
+            FROM entries
+            INNER JOIN users ON entries.by_user_id = users.id
+            WHERE entries.date >= $1
+            AND entries.date <= $2
+            AND (($3::UUID IS NULL) OR (users.id = $3::UUID))
+            ORDER BY entries.date DESC
+            "#,
+            min_date,
+            max_date,
+            user_id_filter
+        ).fetch_all(&pool).await?;
 
-                if let Some(user_id) = user_id_filter {
-                    query
-                        .filter(entries_dsl::by_user_id.eq(user_id))
-                        .load::<(models::Entry, models::User)>(conn)
-                } else {
-                    query.load::<(models::Entry, models::User)>(conn)
-                }
-            })
-            .await??;
+        let entries_w_users = records.into_iter().map(|r| {
+            (
+                models::Entry {
+                    id: r.entry_id,
+                    address: r.address,
+                    revenue: r.revenue.into(),
+                    date: r.date,
+                    by_user_id: r.by_user_id,
+                },
+                models::User {
+                    id: r.id,
+                    name: r.name,
+                    family_name: r.family_name,
+                    patronym: r.patronym,
+                    username: r.username,
+                    password: r.password,
+                },
+            )
+        });
 
-        return Ok(entries_w_users.into_iter().map(|d| d.into()).collect());
+        return Ok(entries_w_users.map(|d| d.into()).collect());
     }
 
     Err(ServerFnError::ServerError(

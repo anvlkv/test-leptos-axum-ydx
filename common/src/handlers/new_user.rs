@@ -11,55 +11,52 @@ pub async fn new_user(
 ) -> Result<(), ServerFnError> {
     use axum_session_auth::HasPermission;
     use bcrypt::{hash, DEFAULT_COST};
-    use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
 
-    use crate::schema::permissions::dsl as perm_dsl;
-    use crate::schema::users::dsl as users_dsl;
     use crate::{
-        ctx::{auth, d_pool, pool},
-        models,
+        ctx::{auth, pool},
         perms::{EDIT_OWNED, MANAGE_USERS, VIEW_ALL, VIEW_OWNED},
     };
 
-    let pool = pool().ok();
+    let pool = pool()?;
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        if user.has(MANAGE_USERS, &pool.as_ref()).await {
-            let pool = d_pool()?;
-            let conn = pool.get().await?;
+        if user.has(MANAGE_USERS, &Some(&pool)).await {
             let pwd = hash(password, DEFAULT_COST)?;
 
-            _ = conn
-                .interact(move |conn| {
-                    let user: models::User = insert_into(users_dsl::users)
-                        .values((
-                            users_dsl::name.eq(name),
-                            users_dsl::family_name.eq(family_name),
-                            users_dsl::patronym.eq(patronym),
-                            users_dsl::username.eq(username),
-                            users_dsl::password.eq(pwd),
-                        ))
-                        .get_result(conn)?;
+            let user_id = sqlx::query!(
+                r#"
+                INSERT INTO users (name, family_name, patronym, username, password)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                "#,
+                name,
+                family_name,
+                patronym,
+                username,
+                pwd,
+            )
+            .fetch_one(&pool)
+            .await?
+            .id;
 
-                    let permissions = if is_admin.is_some() {
-                        vec![MANAGE_USERS, VIEW_ALL]
-                    } else {
-                        vec![EDIT_OWNED, VIEW_OWNED]
-                    };
+            let permissions = if is_admin.is_some() {
+                [MANAGE_USERS, VIEW_ALL]
+            } else {
+                [EDIT_OWNED, VIEW_OWNED]
+            };
 
-                    _ = insert_into(perm_dsl::permissions)
-                        .values(
-                            permissions
-                                .into_iter()
-                                .map(|p| (perm_dsl::user_id.eq(user.id), perm_dsl::token.eq(p)))
-                                .collect::<Vec<_>>(),
-                        )
-                        .execute(conn)?;
-
-                    Result::<(), anyhow::Error>::Ok(())
-                })
-                .await?;
+            sqlx::query!(
+                r#"
+                INSERT INTO permissions (user_id, token)
+                VALUES ($1, $2), ($1, $3)
+                "#,
+                user_id,
+                permissions[0],
+                permissions[1],
+            )
+            .execute(&pool)
+            .await?;
 
             leptos_axum::redirect("/users");
 

@@ -11,25 +11,20 @@ pub async fn update_report(
 
     use axum_session_auth::HasPermission;
     use chrono::{Datelike, NaiveDate, Utc};
-    use diesel::data_types::Cents;
-    use diesel::{update, ExpressionMethods, RunQueryDsl};
+    use sqlx_postgres::types::PgMoney;
 
     use crate::moneys::Moneys;
-    use crate::schema::entries::dsl as entries_dsl;
     use crate::{
-        ctx::{auth, d_pool, pool},
+        ctx::{auth, pool},
         perms::EDIT_OWNED,
     };
 
     let revenue = Moneys::from_str(revenue.as_str())?;
-    let pool = pool().ok();
+    let pool = pool()?;
     let auth = auth()?;
 
     if let Some(user) = auth.current_user.as_ref() {
-        if user.has(EDIT_OWNED, &pool.as_ref()).await {
-            let pool = d_pool()?;
-            let conn = pool.get().await?;
-
+        if user.has(EDIT_OWNED, &Some(&pool)).await {
             let now = Utc::now().date_naive();
             let min_date = NaiveDate::from_ymd_opt(now.year(), now.month(), 1).unwrap();
 
@@ -41,19 +36,23 @@ pub async fn update_report(
 
             let user_id = user.id;
 
-            _ = conn
-                .interact(move |conn| {
-                    update(entries_dsl::entries)
-                        .filter(entries_dsl::by_user_id.eq(user_id))
-                        .filter(entries_dsl::id.eq(id))
-                        .filter(entries_dsl::date.ge(min_date))
-                        .set((
-                            entries_dsl::revenue.eq(Cents(revenue.0)),
-                            entries_dsl::address.eq(address),
-                        ))
-                        .execute(conn)
-                })
-                .await??;
+            sqlx::query!(
+                r#"
+                UPDATE entries
+                SET revenue = $1,
+                address = $2
+                WHERE by_user_id = $3 AND
+                id = $4 AND
+                date >= $5
+                "#,
+                PgMoney(revenue.0),
+                address,
+                user_id,
+                id,
+                min_date
+            )
+            .execute(&pool)
+            .await?;
 
             leptos_axum::redirect("/reports");
 
