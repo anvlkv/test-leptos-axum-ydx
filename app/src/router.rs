@@ -17,9 +17,11 @@ pub fn AppRouter(
     #[prop(into)] login: Action<common::handlers::Login, Result<(), ServerFnError>>,
 ) -> impl IntoView {
     let auth_guard = move || {
-        user.get()
-            .map(|s| s.map(|u| u.is_some()).unwrap_or_default())
-            .unwrap_or(true)
+        user.with(|s| {
+            s.as_ref()
+                .map(|u| u.clone().ok().flatten().is_some())
+                .unwrap_or(true)
+        })
     };
 
     let protected_view = move || {
