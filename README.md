@@ -3,8 +3,7 @@
 ### prepare queries
 
 ```
-cd common
-cargo sqlx prepare -- --features ssr
+cargo sqlx prepare --workspace -- --features ssr
 ```
 
 ### push img

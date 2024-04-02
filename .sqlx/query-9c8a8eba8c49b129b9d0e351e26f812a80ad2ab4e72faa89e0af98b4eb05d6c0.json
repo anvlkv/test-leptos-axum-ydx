@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO permissions(user_id, token)\n            VALUES ($1, $3), ($1, $4), ($2, $3), ($2, $4)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9c8a8eba8c49b129b9d0e351e26f812a80ad2ab4e72faa89e0af98b4eb05d6c0"
+}
